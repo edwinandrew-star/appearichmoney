@@ -1,0 +1,6706 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Appearich - Perfume Sales Tracking</title>
+
+  <!-- =====================================================
+       APPEARICH EDITABLE SETTINGS / QUICK GUIDE
+       CHANGE APP NAME / BRANDING HERE
+       CHANGE CURRENCY HERE (see the money() formatting function)
+       CHANGE IMAGES HERE (see image paths in the HTML below)
+       CHANGE COLORS HERE (see CSS variables under :root and [data-theme="dark"])
+       CHANGE TEXT / LABELS HERE (search for the visible label in the HTML)
+       CHANGE TITHE PERCENTAGE HERE (search for TITHE_PERCENTAGE)
+       FINANCIAL RECONCILIATION: search for "FINANCIAL RECONCILIATION" below
+       IMPORTANT: These comments are guidance only; existing structure/functionality is preserved.
+       ===================================================== -->
+
+  
+
+  <!-- PWA Manifest & Meta Tags -->
+
+  <link rel="manifest" href="/manifest.json">
+
+  <meta name="theme-color" content="#ffffff">
+
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <meta name="apple-mobile-web-app-title" content="Appearich">
+
+  <link rel="apple-touch-icon" href="images/splash-logo.png">
+
+  <link rel="icon" type="image/png" sizes="192x192" href="images/splash-logo.png">
+
+  <link rel="icon" type="image/png" sizes="512x512" href="images/splash-logo.png">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Supabase CDN Client -->
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  
+
+  <style>
+
+    /* CHANGE COLORS HERE: edit the CSS variables below. */
+    :root {
+
+      --bg-color: #f8f9fa;
+
+      --card-bg: #ffffff;
+
+      --card-bg-sub: #f1f3f5;
+
+      --card-border: #e9ecef;
+
+      --text-main: #111111;
+
+      --text-sub: #666666;
+
+      --accent-gold: #d4af37;
+
+      --accent-gold-light: rgba(212, 175, 55, 0.15);
+
+      --nav-bg: #ffffff;
+
+      --nav-border: #e9ecef;
+
+      --input-bg: #f1f3f5;
+
+      --input-border: #ced4da;
+
+      --modal-bg: #ffffff;
+
+      --overlay-bg: rgba(0, 0, 0, 0.5);
+
+      --shadow-color: rgba(0, 0, 0, 0.08);
+
+    }
+
+    [data-theme="dark"] {
+
+      --bg-color: #0d0d0d;
+
+      --card-bg: #181818;
+
+      --card-bg-sub: #141414;
+
+      --card-border: #282828;
+
+      --text-main: #ffffff;
+
+      --text-sub: #aaaaaa;
+
+      --accent-gold: #FFD700;
+
+      --accent-gold-light: rgba(255, 215, 0, 0.15);
+
+      --nav-bg: #111111;
+
+      --nav-border: #222222;
+
+      --input-bg: #000000;
+
+      --input-border: #333333;
+
+      --modal-bg: #141414;
+
+      --overlay-bg: rgba(0, 0, 0, 0.85);
+
+      --shadow-color: rgba(0, 0, 0, 0.5);
+
+    }
+
+    * {
+
+      box-sizing: border-box;
+
+      margin: 0;
+
+      padding: 0;
+
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+      -webkit-tap-highlight-color: transparent;
+
+      transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+
+    }
+
+    body {
+
+      background: var(--bg-color);
+
+      color: var(--text-main);
+
+      min-height: 100vh;
+
+      display: flex;
+
+      flex-direction: column;
+
+      align-items: center;
+
+      padding-top: 70px;
+
+      padding-bottom: 80px;
+
+      overflow-x: hidden;
+
+    }
+
+    
+
+    #splash-screen {
+
+      position: fixed;
+
+      inset: 0;
+
+      background: #000000;
+
+      z-index: 99999;
+
+      display: flex;
+
+      flex-direction: column;
+
+      align-items: center;
+
+      justify-content: center;
+
+      transition: opacity 0.5s ease;
+
+    }
+
+    .splash-logo {
+
+      width: 140px;
+
+      height: 140px;
+
+      object-fit: contain;
+
+      background: transparent;
+
+      border: none;
+
+      outline: none;
+
+      box-shadow: none;
+
+      animation: pulseLogo 1.5s infinite alternate;
+
+    }
+
+    @keyframes pulseLogo {
+
+      from { transform: scale(0.95); opacity: 0.85; }
+
+      to { transform: scale(1.05); opacity: 1; }
+
+    }
+
+    
+
+    @keyframes slideInFromLeft {
+
+      0% { opacity: 0; transform: translateX(-15px); }
+
+      100% { opacity: 1; transform: translateX(0); }
+
+    }
+
+    .auth-container {
+
+      max-width: 400px;
+
+      width: 90%;
+
+      background: transparent;
+
+      border: none;
+
+      border-radius: 0;
+
+      padding: 24px 24px;
+
+      box-shadow: none;
+
+      margin: 20px auto 0 auto;
+
+      text-align: center;
+
+    }
+
+    
+
+    .auth-title { 
+
+      font-size: 1.6rem; 
+
+      font-weight: 800; 
+
+      color: var(--text-main); 
+
+      margin-bottom: 8px; 
+
+      letter-spacing: -0.5px; 
+
+      opacity: 0;
+
+      animation: slideInFromLeft 0.4s ease forwards;
+
+      animation-delay: 0.05s;
+
+    }
+
+    .auth-sub { 
+
+      font-size: 0.85rem; 
+
+      color: var(--text-sub); 
+
+      margin-bottom: 24px; 
+
+      opacity: 0;
+
+      animation: slideInFromLeft 0.4s ease forwards;
+
+      animation-delay: 0.12s;
+
+    }
+
+    
+
+    .auth-container .form-group:nth-of-type(1) { opacity: 0; animation: slideInFromLeft 0.4s ease forwards; animation-delay: 0.19s; }
+
+    .auth-container .form-group:nth-of-type(2) { opacity: 0; animation: slideInFromLeft 0.4s ease forwards; animation-delay: 0.26s; }
+
+    .auth-container .form-group:nth-of-type(3) { opacity: 0; animation: slideInFromLeft 0.4s ease forwards; animation-delay: 0.33s; }
+
+    .auth-container .form-group:nth-of-type(4) { opacity: 0; animation: slideInFromLeft 0.4s ease forwards; animation-delay: 0.40s; }
+
+    .auth-btn {
+
+      width: 100%;
+
+      background: var(--accent-gold);
+
+      color: #000;
+
+      border: none;
+
+      padding: 12px;
+
+      border-radius: 12px;
+
+      font-weight: 800;
+
+      font-size: 0.95rem;
+
+      cursor: pointer;
+
+      margin-top: 12px;
+
+      opacity: 0;
+
+      animation: slideInFromLeft 0.4s ease forwards;
+
+      animation-delay: 0.47s;
+
+    }
+
+    .auth-switch { 
+
+      font-size: 0.82rem; 
+
+      color: var(--text-sub); 
+
+      margin-top: 18px; 
+
+      cursor: pointer; 
+
+      opacity: 0;
+
+      animation: slideInFromLeft 0.4s ease forwards;
+
+      animation-delay: 0.54s;
+
+    }
+
+    .auth-switch span { color: var(--accent-gold); font-weight: 700; }
+
+    
+
+    .app-screen {
+
+      display: none;
+
+      width: 100%;
+
+      max-width: 480px;
+
+      min-height: calc(100vh - 150px);
+
+      padding: 20px 16px;
+
+      flex-direction: column;
+
+      position: relative;
+
+      animation: fadeIn 0.3s ease-in-out;
+
+    }
+
+    .app-screen.active { display: flex; }
+
+    #screen-home { padding-top: 0px; }
+
+    @keyframes fadeIn {
+
+      from { opacity: 0; transform: translateY(6px); }
+
+      to { opacity: 1; transform: translateY(0); }
+
+    }
+
+    
+
+    .app-header {
+
+      position: fixed;
+
+      top: 0;
+
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      max-width: 480px;
+
+      width: 100%;
+
+      height: 70px;
+
+      padding: 0 16px;
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      background: #FFFFFF;
+
+      border-bottom: 1px solid #e9ecef;
+
+      box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+
+      z-index: 1500;
+
+    }
+
+    .header-left { display: flex; align-items: center; gap: 12px; }
+
+    .back-btn {
+
+      background: #f8f9fa;
+
+      border: 1px solid #e0e0e0;
+
+      color: #111111;
+
+      width: 38px;
+
+      height: 38px;
+
+      border-radius: 50%;
+
+      display: flex !important;
+
+      align-items: center;
+
+      justify-content: center;
+
+      font-size: 1rem;
+
+      cursor: pointer;
+
+    }
+
+    .brand-logo-wrap { display: flex; align-items: center; gap: 10px; }
+
+    .brand-logo-img {
+
+      width: 38px;
+
+      height: 38px;
+
+      border-radius: 8px;
+
+      background: transparent;
+
+      object-fit: contain;
+
+    }
+
+    .brand-name {
+
+      font-size: 1.35rem;
+
+      font-weight: 800;
+
+      letter-spacing: 0.5px;
+
+      color: #111111;
+
+      text-transform: capitalize;
+
+    }
+
+    .theme-toggle-btn {
+
+      background: #f8f9fa;
+
+      border: 1px solid #e0e0e0;
+
+      color: #111111;
+
+      width: 38px;
+
+      height: 38px;
+
+      border-radius: 50%;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      font-size: 1rem;
+
+      cursor: pointer;
+
+    }
+
+    .hero-banner {
+
+      width: calc(100% + 32px);
+
+      margin-left: -16px;
+
+      margin-right: -16px;
+
+      margin-top: 0;
+
+      height: 160px;
+
+      border-radius: 0 0 20px 20px;
+
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(0, 0, 0, 0.7) 100%), 
+
+                  url('images/home-hero.jpg') center/cover;
+
+      position: relative;
+
+      overflow: hidden;
+
+      display: flex;
+
+      flex-direction: column;
+
+      justify-content: flex-end;
+
+      padding: 18px;
+
+      border: 1px solid var(--card-border);
+
+      border-top: none;
+
+      box-shadow: 0 10px 25px var(--shadow-color);
+
+      margin-bottom: 24px;
+
+    }
+
+    .hero-greeting { font-size: 1.5rem; font-weight: 800; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+
+    .hero-tagline { font-size: 0.85rem; color: #FFD700; font-weight: 600; margin-top: 4px; letter-spacing: 0.5px; }
+
+    .section-title {
+
+      font-size: 1.1rem;
+
+      font-weight: 800;
+
+      text-transform: uppercase;
+
+      letter-spacing: 1.5px;
+
+      color: var(--text-main);
+
+      margin-bottom: 14px;
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 8px;
+
+    }
+
+    .offerings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+
+    .offer-card {
+
+      background: var(--card-bg);
+
+      border-radius: 18px;
+
+      height: 160px;
+
+      position: relative;
+
+      overflow: hidden;
+
+      border: 1.5px solid var(--card-border);
+
+      cursor: pointer;
+
+      transition: all 0.25s ease;
+
+      display: flex;
+
+      flex-direction: column;
+
+      justify-content: flex-end;
+
+      padding: 14px;
+
+      box-shadow: 0 4px 12px var(--shadow-color);
+
+    }
+
+    .offer-card-bg {
+
+      position: absolute;
+
+      inset: 0;
+
+      background-size: cover;
+
+      background-position: center;
+
+      filter: brightness(0.85);
+
+    }
+
+    .offer-card-overlay { position: relative; z-index: 2; }
+
+    .offer-card-title { font-size: 1.15rem; font-weight: 800; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+
+    .offer-card-desc { font-size: 0.72rem; color: #FFD700; margin-top: 2px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+
+    .section-divider {
+
+      width: 100%;
+
+      height: 1px;
+
+      background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+
+      margin: 10px 0 24px 0;
+
+    }
+
+    
+
+    .quick-reorder-section {
+
+      background: var(--card-bg);
+
+      border-radius: 16px;
+
+      padding: 14px;
+
+      border: 1px solid var(--card-border);
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      margin-bottom: 20px;
+
+      box-shadow: 0 4px 12px var(--shadow-color);
+
+    }
+
+    .quick-reorder-info { display: flex; align-items: center; gap: 12px; }
+
+    .quick-reorder-icon {
+
+      width: 40px;
+
+      height: 40px;
+
+      border-radius: 50%;
+
+      background: var(--accent-gold-light);
+
+      color: var(--accent-gold);
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      font-size: 1.1rem;
+
+    }
+
+    .reorder-text-main { font-size: 0.9rem; font-weight: 700; color: var(--text-main); }
+
+    .reorder-text-sub { font-size: 0.75rem; color: var(--text-sub); }
+
+    .reorder-btn {
+
+      background: transparent;
+
+      border: 1px solid var(--accent-gold);
+
+      color: var(--accent-gold);
+
+      padding: 6px 14px;
+
+      border-radius: 20px;
+
+      font-size: 0.75rem;
+
+      font-weight: 700;
+
+      cursor: pointer;
+
+    }
+
+    .logout-main-btn {
+
+      width: 100%;
+
+      background: transparent;
+
+      border: 2px solid #e74c3c;
+
+      color: #e74c3c;
+
+      padding: 14px;
+
+      border-radius: 16px;
+
+      font-weight: 800;
+
+      font-size: 0.95rem;
+
+      cursor: pointer;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      gap: 10px;
+
+      margin-top: 20px;
+
+      margin-bottom: 20px;
+
+    }
+
+    .logout-main-btn:hover { background: rgba(231, 76, 60, 0.1); }
+
+    
+
+    .modal-overlay {
+
+      display: none;
+
+      position: fixed;
+
+      inset: 0;
+
+      background: var(--overlay-bg);
+
+      backdrop-filter: blur(8px);
+
+      justify-content: center;
+
+      align-items: flex-end;
+
+      z-index: 2000;
+
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .sheet-content {
+
+      background: var(--modal-bg);
+
+      border: 2px solid var(--card-border);
+
+      border-top-left-radius: 24px;
+
+      border-top-right-radius: 24px;
+
+      width: 100%;
+
+      max-width: 480px;
+
+      max-height: 88vh;
+
+      overflow-y: auto;
+
+      padding: 24px 20px;
+
+      position: relative;
+
+    }
+
+    .sheet-content.full-screen {
+
+      height: 100vh;
+
+      max-height: 100vh;
+
+      border-radius: 0;
+
+      border: none;
+
+      max-width: 480px;
+
+      padding: 0 18px 40px 18px;
+
+    }
+
+    .sheet-close {
+
+      position: absolute;
+
+      top: 16px;
+
+      right: 18px;
+
+      font-size: 1.4rem;
+
+      color: var(--text-sub);
+
+      cursor: pointer;
+
+      z-index: 20;
+
+    }
+
+    .modal-sticky-header {
+
+      position: sticky;
+
+      top: 0;
+
+      background: var(--modal-bg);
+
+      padding: 18px 0 12px 0;
+
+      z-index: 15;
+
+      border-bottom: 1px solid var(--card-border);
+
+      margin-bottom: 16px;
+
+    }
+
+    .sheet-title { font-size: 1.4rem; font-weight: 900; color: var(--text-main); text-align: center; }
+
+    
+
+    .form-row { display: flex; gap: 10px; }
+
+    .form-group { margin-bottom: 14px; text-align: left; flex: 1; }
+
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-sub); margin-bottom: 5px; }
+
+    .form-group input, .form-group textarea, .form-group select {
+
+      width: 100%;
+
+      background: var(--input-bg);
+
+      border: 1.5px solid var(--input-border);
+
+      border-radius: 10px;
+
+      padding: 10px 12px;
+
+      color: var(--text-main);
+
+      font-size: 0.85rem;
+
+      outline: none;
+
+    }
+
+    
+
+    .pay-option-btn {
+
+      background: var(--card-bg);
+
+      border: 2px solid var(--card-border);
+
+      border-radius: 12px;
+
+      padding: 10px 6px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      align-items: center;
+
+      gap: 4px;
+
+      cursor: pointer;
+
+      font-size: 0.78rem;
+
+      font-weight: 800;
+
+      color: var(--text-main);
+
+    }
+
+    .pay-option-btn.active { border-color: var(--accent-gold); background: var(--accent-gold-light); }
+
+    .conditional-box {
+
+      display:none;
+
+      margin-top:10px;
+
+      padding:12px;
+
+      border:1px solid var(--accent-gold);
+
+      border-radius:12px;
+
+      background:var(--card-bg-sub);
+
+    }
+
+    .conditional-box.active { display:block; }
+
+    
+
+    .loyalty-card {
+
+      background: var(--card-bg);
+
+      border: 1.5px solid var(--accent-gold);
+
+      border-radius: 18px;
+
+      padding: 16px;
+
+      margin-bottom: 20px;
+
+      box-shadow: 0 4px 12px var(--shadow-color);
+
+    }
+
+    .loyalty-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+
+    .loyalty-title { font-size: 0.95rem; font-weight: 800; color: var(--accent-gold); }
+
+    .loyalty-badge { font-size: 0.7rem; background: var(--accent-gold); color: #000; font-weight: 900; padding: 3px 8px; border-radius: 10px; }
+
+    .stamps-row { display: flex; justify-content: space-between; margin-top: 10px; }
+
+    .stamp-dot {
+
+      width: 44px;
+
+      height: 44px;
+
+      border-radius: 50%;
+
+      background: var(--card-bg-sub);
+
+      border: 2px dashed var(--input-border);
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      font-size: 0.85rem;
+
+      color: var(--text-sub);
+
+      font-weight: 800;
+
+    }
+
+    .stamp-dot.filled { background: var(--accent-gold); border-style: solid; border-color: var(--accent-gold); color: #000; }
+
+    
+
+    .ai-screen-wrap {
+
+      text-align: center;
+
+      display: flex;
+
+      flex-direction: column;
+
+      align-items: center;
+
+      justify-content: center;
+
+      min-height: calc(100vh - 170px);
+
+    }
+
+    .ambient-glow {
+
+      position: absolute;
+
+      width: 260px;
+
+      height: 260px;
+
+      background: radial-gradient(circle, var(--accent-gold-light) 0%, rgba(0,0,0,0) 70%);
+
+      top: 15%;
+
+      pointer-events: none;
+
+    }
+
+    .teaser-image-card {
+
+      position: relative;
+
+      width: 100%;
+
+      max-width: 360px;
+
+      height: 230px;
+
+      border-radius: 22px;
+
+      overflow: hidden;
+
+      margin-bottom: 24px;
+
+      box-shadow: 0 15px 35px var(--shadow-color);
+
+      background: var(--card-bg);
+
+      cursor: pointer;
+
+    }
+
+    .teaser-image-card img { width: 100%; height: 100%; object-fit: cover; }
+
+    .image-overlay { position: absolute; inset: 0; background: linear-gradient(to top, var(--bg-color) 10%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0) 100%); }
+
+    .ai-badge {
+
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 8px;
+
+      background: var(--card-bg-sub);
+
+      color: var(--text-main);
+
+      padding: 6px 14px;
+
+      border-radius: 50px;
+
+      font-size: 11px;
+
+      font-weight: 800;
+
+      text-transform: uppercase;
+
+      margin-bottom: 16px;
+
+      border: 1px solid var(--card-border);
+
+    }
+
+    .ai-title { font-size: 2.2rem; font-weight: 900; line-height: 1.1; margin-bottom: 8px; color: var(--text-main); }
+
+    .ai-title span { color: var(--accent-gold); }
+
+    .ai-sub { font-size: 0.85rem; color: var(--text-sub); max-width: 300px; margin-bottom: 24px; line-height: 1.5; }
+
+    .status-pill-btn {
+
+      background: var(--accent-gold);
+
+      color: #111111;
+
+      border: none;
+
+      padding: 14px 28px;
+
+      border-radius: 16px;
+
+      font-weight: 800;
+
+      font-size: 0.9rem;
+
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 10px;
+
+      cursor: pointer;
+
+    }
+
+    .coming-soon-toast {
+
+      position: fixed;
+
+      top: -100px;
+
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      width: calc(100% - 32px);
+
+      max-width: 440px;
+
+      background: var(--accent-gold);
+
+      color: #111111;
+
+      padding: 16px;
+
+      border-radius: 18px;
+
+      box-shadow: 0 15px 30px var(--shadow-color);
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 12px;
+
+      z-index: 3000;
+
+      opacity: 0;
+
+      transition: all 0.4s ease;
+
+    }
+
+    .coming-soon-toast.trigger-fly { top: 20px; opacity: 1; }
+
+    .toast-icon-wrap {
+
+      background: #111;
+
+      color: var(--accent-gold);
+
+      width: 40px;
+
+      height: 40px;
+
+      border-radius: 50%;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      font-size: 1.1rem;
+
+      flex-shrink: 0;
+
+    }
+
+    .profile-header-card {
+
+      background: var(--card-bg);
+
+      border: 1.5px solid var(--card-border);
+
+      border-radius: 20px;
+
+      padding: 20px;
+
+      text-align: center;
+
+      margin-bottom: 20px;
+
+      box-shadow: 0 4px 12px var(--shadow-color);
+
+    }
+
+    .profile-avatar {
+
+      width: 70px;
+
+      height: 70px;
+
+      border-radius: 50%;
+
+      background: var(--accent-gold);
+
+      color: #000;
+
+      font-size: 1.8rem;
+
+      font-weight: 900;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      margin: 0 auto 12px auto;
+
+    }
+
+    .profile-name { font-size: 1.2rem; font-weight: 800; color: var(--text-main); }
+
+    .profile-phone { font-size: 0.85rem; color: var(--text-sub); margin-top: 2px; }
+
+    .whatsapp-support-btn {
+
+      width: 100%;
+
+      background: #25D366;
+
+      color: #fff;
+
+      border: none;
+
+      padding: 14px;
+
+      border-radius: 14px;
+
+      font-size: 0.95rem;
+
+      font-weight: 800;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      gap: 10px;
+
+      cursor: pointer;
+
+      margin-bottom: 20px;
+
+      text-decoration: none;
+
+    }
+
+    .bottom-nav {
+
+      position: fixed;
+
+      bottom: 0; left: 0; right: 0;
+
+      height: 70px;
+
+      background: var(--nav-bg);
+
+      border-top: 1.5px solid var(--nav-border);
+
+      display: flex;
+
+      justify-content: space-around;
+
+      align-items: center;
+
+      z-index: 1000;
+
+    }
+
+    .nav-item {
+
+      display: flex;
+
+      flex-direction: column;
+
+      align-items: center;
+
+      gap: 4px;
+
+      color: var(--text-sub);
+
+      text-decoration: none;
+
+      font-size: 0.72rem;
+
+      font-weight: 700;
+
+      background: none;
+
+      border: none;
+
+      cursor: pointer;
+
+    }
+
+    .nav-item i { font-size: 1.3rem; }
+
+    .nav-item.active { color: var(--accent-gold); }
+
+    .pwa-install-btn {
+
+      background: var(--accent-gold-light);
+
+      border: 1px solid var(--accent-gold);
+
+      color: var(--accent-gold);
+
+      padding: 6px 12px;
+
+      border-radius: 20px;
+
+      font-size: 0.75rem;
+
+      font-weight: 800;
+
+      cursor: pointer;
+
+      display: none;
+
+      align-items: center;
+
+      gap: 6px;
+
+    }
+
+    #screen-auth {
+
+      position: relative;
+
+      width: 100%;
+
+      max-width: 100%;
+
+      min-height: 100vh;
+
+      overflow: hidden;
+
+      background: #fff;
+
+    }
+
+    .auth-hero-video {
+
+      position: absolute;
+
+      inset: 0;
+
+      width: 100%;
+
+      height: 100%;
+
+      object-fit: cover;
+
+      object-position: center;
+
+      background: #fff;
+
+      z-index: 0;
+
+    }
+
+    .auth-video-wash {
+
+      position: absolute;
+
+      inset: 0;
+
+      background: rgba(255,255,255,0.18);
+
+      z-index: 1;
+
+      pointer-events: none;
+
+    }
+
+    .auth-container {
+
+      position: relative;
+
+      z-index: 2;
+
+      width: min(400px, 90%);
+
+    }
+
+    .sales-entry-card, .progress-panel, .stock-panel, .review-card {
+
+      background: var(--card-bg);
+
+      border: 1px solid var(--card-border);
+
+      border-radius: 18px;
+
+      padding: 16px;
+
+      margin-bottom: 14px;
+
+      box-shadow: 0 4px 12px var(--shadow-color);
+
+    }
+
+    .sales-entry-card h3, .progress-panel h3, .stock-panel h3 {
+
+      font-size: 1rem;
+
+      font-weight: 900;
+
+      margin-bottom: 12px;
+
+    }
+
+    .select-control, .date-control, .number-control {
+
+      width: 100%;
+
+      background: var(--input-bg);
+
+      border: 1.5px solid var(--input-border);
+
+      border-radius: 10px;
+
+      padding: 10px 12px;
+
+      color: var(--text-main);
+
+      font-size: .85rem;
+
+      outline: none;
+
+    }
+
+    .payment-main-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+    .sales-save-btn {
+
+      width:100%;
+
+      background:var(--accent-gold);
+
+      color:#111;
+
+      border:none;
+
+      border-radius:12px;
+
+      padding:14px;
+
+      font-weight:900;
+
+      cursor:pointer;
+
+      margin-top:4px;
+
+    }
+
+    .review-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+    .review-tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-bottom:12px; }
+
+    .review-tab {
+
+      border:1px solid var(--card-border);
+
+      background:var(--card-bg-sub);
+
+      border-radius:10px;
+
+      padding:99px 5px;
+
+      font-size:.72rem;
+
+      font-weight:800;
+
+      cursor:pointer;
+
+      color:var(--text-main);
+
+    }
+
+    .review-tab.active { border-color:var(--accent-gold); color:var(--accent-gold); }
+
+    .sale-actions { display:flex; gap:7px; margin-top:10px; }
+
+    .small-action {
+
+      flex:1; padding:8px; border-radius:9px; border:1px solid var(--card-border);
+
+      background:var(--card-bg-sub); color:var(--text-main); font-size:.72rem; font-weight:800; cursor:pointer;
+
+    }
+
+    .small-action.delete { color:#e74c3c; border-color:#e74c3c; }
+
+    .monthly-review-btn {
+
+      background:var(--accent-gold); color:#111; border:none; padding:8px 12px;
+
+      border-radius:20px; font-size:.72rem; font-weight:900; cursor:pointer;
+
+    }
+
+    .archive-toggle {
+
+      width:100%; display:flex; justify-content:space-between; align-items:center;
+
+      background:var(--card-bg); border:1px solid var(--card-border); border-radius:14px;
+
+      padding:11px 13px; color:var(--text-main); font-weight:900; cursor:pointer;
+
+    }
+
+    .archive-list-collapsed { display:none; }
+
+    .archive-list-collapsed.open { display:block; margin-top:10px; }
+
+    
+
+    .expenses-card { background:var(--card-bg); border:1px solid var(--card-border); border-radius:18px; padding:16px; margin-bottom:14px; box-shadow:0 4px 12px var(--shadow-color); }
+
+    .expense-item { background:var(--card-bg); border:1px solid var(--card-border); border-radius:14px; padding:12px; margin-bottom:10px; }
+
+    .expense-item-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+
+    .expense-name { font-size:.88rem; font-weight:900; }
+
+    .expense-meta { font-size:.7rem; color:var(--text-sub); margin-top:3px; }
+
+    .expense-amount { font-size:.9rem; font-weight:900; color:var(--accent-gold); white-space:nowrap; }
+
+    .expense-notes { font-size:.74rem; color:var(--text-sub); margin-top:7px; line-height:1.4; }
+
+    .expense-actions { display:flex; gap:7px; margin-top:9px; }
+
+    .expense-action { flex:1; padding:7px; border-radius:9px; border:1px solid var(--card-border); background:var(--card-bg-sub); color:var(--text-main); font-size:.72rem; font-weight:800; cursor:pointer; }
+
+    .expense-action.delete { color:#e74c3c; border-color:#e74c3c; }
+
+    .expense-empty { font-size:.78rem; color:var(--text-sub); text-align:center; padding:14px 4px; }
+
+    .expense-total-box { background:var(--card-bg-sub); border:1.5px solid var(--accent-gold); border-radius:12px; padding:11px 13px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
+
+    .expense-total-label { font-size:.75rem; font-weight:800; color:var(--text-sub); }
+
+    .expense-total-value { font-size:1rem; font-weight:900; }
+
+  .expense-category-list { display:flex; flex-direction:column; gap:10px; }
+
+  .expense-category-card { background:var(--card-bg); border:1px solid var(--card-border); border-radius:16px; overflow:hidden; box-shadow:0 4px 12px var(--shadow-color); }
+
+  .expense-category-header { width:100%; border:0; background:var(--card-bg); color:var(--text-main); padding:13px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px; text-align:left; cursor:pointer; }
+
+  .expense-category-header:active { transform:scale(.995); }
+
+  .expense-category-main { min-width:0; flex:1; }
+
+  .expense-category-title { font-size:.88rem; font-weight:900; }
+
+  .expense-category-summary { margin-top:3px; font-size:.7rem; color:var(--text-sub); }
+
+  .expense-category-chevron { flex-shrink:0; color:var(--accent-gold); transition:transform .25s ease; }
+
+  .expense-category-card.open .expense-category-chevron { transform:rotate(180deg); }
+
+  .expense-category-content { display:none; padding:0 14px 14px; border-top:1px solid var(--card-border); }
+
+  .expense-category-card.open .expense-category-content { display:block; }
+
+  .expense-entry-compact { padding-top:13px; }
+
+  .expense-entry-compact .form-group { margin-bottom:10px; }
+
+  .expense-entry-compact .sales-save-btn { margin-top:0; }
+
+  .expense-feedback { min-height:18px; margin:7px 0 2px; font-size:.72rem; color:var(--accent-gold); font-weight:800; text-align:center; }
+
+  .expense-records-title { font-size:.9rem; font-weight:900; margin:18px 0 10px; }
+
+  .expense-record-category { font-size:.68rem; color:var(--accent-gold); font-weight:900; margin-top:2px; }
+
+  .expense-record-date { font-size:.68rem; color:var(--text-sub); margin-top:2px; }
+
+  .expense-record-desc { font-size:.84rem; font-weight:900; margin-top:2px; overflow-wrap:anywhere; }
+
+  .expense-records-empty { font-size:.78rem; color:var(--text-sub); text-align:center; padding:12px 4px; }
+
+  .expense-category-records { margin-top:12px; }
+
+  .expense-category-record { padding:9px 0; border-top:1px solid var(--card-border); }
+
+  .expense-category-record:first-child { border-top:none; }
+
+  .expense-category-record-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+
+  .expense-category-record-name { font-size:.8rem; font-weight:900; overflow-wrap:anywhere; }
+
+  .expense-category-record-amount { font-size:.8rem; font-weight:900; color:var(--accent-gold); white-space:nowrap; }
+
+  .expense-category-record-meta { font-size:.68rem; color:var(--text-sub); margin-top:2px; }
+
+  .expense-category-record-actions { display:flex; gap:6px; margin-top:7px; }
+
+  .expense-category-record-actions .expense-action { padding:6px; }
+
+  .expense-add-another { width:100%; margin-top:8px; }
+
+  
+
+    .auth-forgot { font-size: 0.82rem; color: var(--accent-gold); margin-top: 10px; cursor: pointer; font-weight: 700; text-align: center; }
+
+    .auth-reset-message { font-size: 0.82rem; color: var(--accent-gold); margin-top: 10px; min-height: 18px; text-align: center; }
+
+    
+
+    /* STOCKS & ACCORDION STYLES */
+
+    .stock-header-wrapper {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      margin-bottom: 12px;
+
+    }
+
+    .stock-history-btn {
+
+      background: linear-gradient(135deg, var(--accent-gold) 0%, #b89628 100%);
+
+      color: #000;
+
+      border: none;
+
+      padding: 6px 12px;
+
+      border-radius: 20px;
+
+      font-size: 0.72rem;
+
+      font-weight: 900;
+
+      cursor: pointer;
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 6px;
+
+      box-shadow: 0 2px 6px var(--shadow-color);
+
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    }
+
+    .stock-history-btn:active {
+
+      transform: scale(0.96);
+
+    }
+
+    .accordion-item {
+
+      background: var(--card-bg);
+
+      border: 1px solid var(--card-border);
+
+      border-radius: 14px;
+
+      margin-bottom: 12px;
+
+      overflow: hidden;
+
+    }
+
+    .accordion-header {
+
+      padding: 14px 16px;
+
+      font-weight: 800;
+
+      font-size: 0.95rem;
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      cursor: pointer;
+
+      background: var(--card-bg-sub);
+
+    }
+
+    .accordion-content {
+
+      display: none;
+
+      padding: 16px;
+
+      border-top: 1px solid var(--card-border);
+
+    }
+
+    .accordion-content.active {
+
+      display: block;
+
+    }
+
+    .stock-rec-card {
+
+      background: var(--card-bg-sub);
+
+      border: 1px solid var(--card-border);
+
+      border-radius: 12px;
+
+      padding: 12px;
+
+      margin-bottom: 10px;
+
+    }
+
+    .stock-rec-head {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      margin-bottom: 6px;
+
+      font-weight: 800;
+
+    }
+
+    .stock-grid-3 {
+
+      display: grid;
+
+      grid-template-columns: repeat(3, 1fr);
+
+      gap: 6px;
+
+      text-align: center;
+
+      margin-top: 8px;
+
+    }
+
+    .stock-stat-lbl { font-size: 0.7rem; color: var(--text-sub); }
+
+    .stock-stat-val { font-size: 0.9rem; font-weight: 800; margin-top: 2px; }
+
+    /* INDIVIDUAL SALE BOX & BEST SELLERS FORMATTING */
+
+    .sale-card-item {
+
+      background: var(--card-bg);
+
+      border: 1.5px solid var(--card-border);
+
+      border-radius: 16px;
+
+      padding: 14px;
+
+      margin-bottom: 14px;
+
+      box-shadow: 0 4px 12px var(--shadow-color);
+
+    }
+
+    .bestseller-item {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      padding: 10px 12px;
+
+      background: var(--card-bg-sub);
+
+      border-radius: 10px;
+
+      margin-bottom: 8px;
+
+      font-weight: 800;
+
+      font-size: 0.85rem;
+
+    }
+
+    /* STOCK ACTIVITY LOG ITEM STYLES */
+
+    .activity-log-item {
+
+      background: var(--card-bg-sub);
+
+      border: 1px solid var(--card-border);
+
+      border-radius: 12px;
+
+      padding: 12px;
+
+      margin-bottom: 10px;
+
+    }
+
+    .activity-log-type {
+
+      font-size: 0.68rem;
+
+      font-weight: 900;
+
+      text-transform: uppercase;
+
+      padding: 2px 8px;
+
+      border-radius: 10px;
+
+      background: var(--accent-gold-light);
+
+      color: var(--accent-gold);
+
+      display: inline-block;
+
+      margin-bottom: 6px;
+
+    }
+
+    .activity-log-title {
+
+      font-size: 0.9rem;
+
+      font-weight: 800;
+
+      color: var(--text-main);
+
+    }
+
+    .activity-log-meta {
+
+      font-size: 0.75rem;
+
+      color: var(--text-sub);
+
+      margin-top: 4px;
+
+    }
+
+/* HISTORY & FINANCIAL RECONCILIATION */
+
+.history-screen{padding-bottom:95px}
+
+.history-home-btn{width:100%;background:var(--card-bg);border:1.5px solid var(--accent-gold);color:var(--accent-gold);padding:12px;border-radius:14px;font-weight:900;font-size:.9rem;cursor:pointer;margin-top:4px;margin-bottom:10px}
+
+.history-period-card,.history-section-card,.history-recon-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 4px 12px var(--shadow-color)}
+
+.history-period-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+
+.history-period-tab{border:1px solid var(--card-border);background:var(--card-bg-sub);color:var(--text-main);border-radius:10px;padding:9px 4px;font-size:.72rem;font-weight:900;cursor:pointer}
+
+.history-period-tab.active{border-color:var(--accent-gold);color:var(--accent-gold);background:var(--accent-gold-light)}
+
+.history-date-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+.history-date-row.single{grid-template-columns:1fr}
+
+.history-period-label{font-size:.72rem;color:var(--text-sub);font-weight:800;margin-bottom:5px}
+
+.history-section-header{width:100%;border:0;background:transparent;color:var(--text-main);display:flex;justify-content:space-between;align-items:center;padding:0;cursor:pointer;text-align:left}
+
+.history-section-title{font-size:.92rem;font-weight:900}
+
+.history-section-content{display:none;margin-top:11px;border-top:1px solid var(--card-border);padding-top:10px}
+
+.history-section-card.open .history-section-content{display:block}
+
+.history-section-chevron{color:var(--accent-gold);transition:transform .2s ease}
+
+.history-section-card.open .history-section-chevron{transform:rotate(180deg)}
+
+.history-table{width:100%;border-collapse:collapse;font-size:.74rem}
+
+.history-table th{text-align:left;color:var(--text-sub);font-size:.68rem;padding:6px 4px;border-bottom:1px solid var(--card-border)}
+
+.history-table th:last-child,.history-table td:last-child{text-align:right}
+
+.history-table td{padding:7px 4px;border-bottom:1px solid var(--card-border);vertical-align:top}
+
+.history-table tr:last-child td{border-bottom:none}
+
+.history-total-row td{font-weight:900;border-top:1.5px solid var(--accent-gold)}
+
+.history-highlight{background:var(--accent-gold-light);border:1.5px solid var(--accent-gold);border-radius:12px;padding:10px 12px}
+
+.history-highlight .history-value{font-size:1.05rem;font-weight:950;color:var(--accent-gold)}
+
+.history-recon-table td{padding:7px 4px}
+
+.history-empty{color:var(--text-sub);text-align:center;padding:10px 4px;font-size:.76rem}
+
+.history-add-btn{width:100%;background:var(--accent-gold);color:#111;border:0;border-radius:11px;padding:10px;font-weight:900;cursor:pointer;margin-bottom:8px}
+
+.history-action-row{display:flex;gap:6px;margin-top:7px}
+
+.history-action{flex:1;border:1px solid var(--card-border);background:var(--card-bg-sub);color:var(--text-main);border-radius:8px;padding:6px;font-size:.68rem;font-weight:800;cursor:pointer}
+
+.history-action.delete{color:#e74c3c;border-color:#e74c3c}
+
+.history-daily-row{cursor:pointer}
+
+.history-daily-row:active{background:var(--accent-gold-light)}
+
+.history-pdf-btn{width:100%;background:#111;color:var(--accent-gold);border:1px solid var(--accent-gold);border-radius:12px;padding:12px;font-weight:900;cursor:pointer;margin-top:2px}
+
+.history-note{font-size:.68rem;color:var(--text-sub);margin-top:6px;line-height:1.35}
+
+    /* OLD SALES - PRESERVED IMPORT HISTORY */
+    .monthly-review-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+    .old-sales-screen{padding-bottom:95px}
+    .old-sales-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+    .old-sales-import-btn{background:var(--accent-gold);color:#111;border:none;border-radius:12px;padding:10px 14px;font-weight:900;font-size:.78rem;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+    .old-sales-search{flex:1;min-width:180px;background:var(--input-bg);border:1.5px solid var(--input-border);border-radius:12px;padding:10px 12px;color:var(--text-main);font-size:.82rem;outline:none}
+    .old-sales-note{font-size:.7rem;color:var(--text-sub);line-height:1.4;margin-bottom:12px}
+    .old-sales-batch{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:12px;margin-bottom:12px;box-shadow:0 4px 12px var(--shadow-color)}
+    .old-sales-batch-title{font-size:.82rem;font-weight:900;margin-bottom:8px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+    .old-sales-batch-meta{font-size:.68rem;color:var(--text-sub);font-weight:600}
+    .old-sales-table-wrap{overflow-x:auto;max-height:62vh;overflow-y:auto;border:1px solid var(--card-border);border-radius:10px}
+    .old-sales-table{width:max-content;min-width:100%;border-collapse:collapse;font-size:.72rem}
+    .old-sales-table th{position:sticky;top:0;background:var(--card-bg-sub);color:var(--text-sub);font-size:.67rem;font-weight:900;text-align:left;padding:8px 7px;border-bottom:1px solid var(--card-border);white-space:nowrap;z-index:2}
+    .old-sales-table td{padding:8px 7px;border-bottom:1px solid var(--card-border);vertical-align:top;white-space:nowrap}
+    .old-sales-actions-cell{display:flex;gap:5px;align-items:center;white-space:nowrap}
+    .old-sales-edit-input{min-width:90px;width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid var(--card-border);border-radius:8px;background:var(--card-bg-sub);color:var(--text-main);font-size:.72rem;outline:none}
+    .old-sales-edit-input:focus{border-color:var(--accent-gold);box-shadow:0 0 0 2px var(--accent-gold-light)}
+    .old-sales-table tr:last-child td{border-bottom:none}
+    .old-sales-empty{color:var(--text-sub);text-align:center;padding:18px 8px;font-size:.78rem}
+    .old-sales-count{font-size:.68rem;color:var(--text-sub);margin-bottom:10px}
+    .old-sales-home-btn{width:100%;background:var(--card-bg);border:1.5px solid var(--accent-gold);color:var(--accent-gold);padding:11px;border-radius:14px;font-weight:900;font-size:.8rem;cursor:pointer;margin-top:4px}
+
+.finance-cards-strip{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 14px;margin:0 -2px 14px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+.finance-card{flex:0 0 142px;min-width:142px;height:112px;border:1.5px solid var(--card-border);border-radius:16px;background:var(--card-bg);color:var(--text-main);padding:13px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 4px 12px var(--shadow-color);cursor:pointer;scroll-snap-align:start}
+.finance-card i{font-size:1.15rem;color:var(--accent-gold)}.finance-card strong{font-size:.78rem;line-height:1.2;letter-spacing:.3px}.finance-card span{font-size:.67rem;color:var(--text-sub)}
+.income-main-btn{width:100%;padding:17px;border:0;border-radius:15px;background:var(--accent-gold);color:#111;font-weight:950;font-size:1rem;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;margin:2px 0 12px;box-shadow:0 5px 14px var(--shadow-color)}
+.finance-management-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:17px;padding:15px;margin-bottom:12px;box-shadow:0 4px 12px var(--shadow-color)}
+.finance-record{border:1px solid var(--card-border);background:var(--card-bg-sub);border-radius:12px;padding:11px;margin:9px 0}
+.finance-record-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.finance-record-name{font-weight:900;font-size:.84rem;overflow-wrap:anywhere}.finance-record-meta{font-size:.69rem;color:var(--text-sub);margin-top:4px}.finance-record-amount{font-weight:900;color:var(--accent-gold);white-space:nowrap;font-size:.84rem}
+.finance-record-actions{display:flex;gap:7px;margin-top:8px}.finance-record-actions button{flex:1}
+.finance-summary{background:var(--accent-gold-light);border:1px solid var(--accent-gold);border-radius:12px;padding:12px;margin:10px 0;font-size:.82rem}
+.finance-back-btn{width:100%;background:var(--card-bg-sub);border:1px solid var(--card-border);border-radius:11px;padding:11px;color:var(--text-main);font-weight:800;margin-top:8px;cursor:pointer}
+
+  </style>
+
+</head>
+
+<body>
+
+  <div id="splash-screen">
+
+    <img src="images/splash-logo.png" alt="Appearich Splash Logo" class="splash-logo">
+
+  </div>
+
+  <div id="screen-auth" class="app-screen" style="display:none; justify-content:center; align-items:center;">
+
+    <video class="auth-hero-video" autoplay muted loop playsinline preload="auto">
+
+      <source src="login-hero.mp4" type="video/mp4">
+
+    </video>
+
+    <div class="auth-video-wash"></div>
+
+    <div class="auth-container">
+
+      <div id="authTitle" class="auth-title">Welcome Back</div>
+
+      <div id="authSub" class="auth-sub">Sign in to your Appearich account</div>
+
+      
+
+      <div class="form-group" id="usernameGroup" style="display:none;">
+
+        <label for="authUsername">Username</label>
+
+        <input type="text" id="authUsername" placeholder="e.g. Edwin or John">
+
+      </div>
+
+      <div class="form-group">
+
+        <label for="authEmail">Email Address</label>
+
+        <input type="email" id="authEmail" placeholder="e.g. user@glamo.com">
+
+      </div>
+
+      <div class="form-group" id="phoneGroup" style="display:none;">
+
+        <label for="authPhone">Phone Number</label>
+
+        <input type="tel" id="authPhone" placeholder="e.g. 0764519027">
+
+      </div>
+
+      <div class="form-group">
+
+        <label for="authPassword">Password</label>
+
+        <input type="password" id="authPassword" placeholder="••••••••">
+
+      </div>
+
+      <div class="form-group" id="confirmPasswordGroup" style="display:none;">
+
+        <label for="authConfirmPassword">Confirm Password</label>
+
+        <input type="password" id="authConfirmPassword" placeholder="••••••••" autocomplete="new-password">
+
+      </div>
+
+      
+
+      <button id="authSubmitBtn" class="auth-btn" onclick="handleAuthSubmit()">Sign In</button>
+
+      <div class="auth-switch" onclick="toggleAuthMode()">
+
+        <span id="authSwitchText">Don't have an account? Register here</span>
+
+      </div>
+
+      <div id="forgotPasswordLink" class="auth-forgot" onclick="handleForgotPassword()">Forgot Password?</div>
+
+    </div>
+
+    <div id="resetPasswordContainer" class="auth-container" style="display:none;">
+
+      <div class="auth-title">Reset Password</div>
+
+      <div class="auth-sub">Enter a new password for your Appearich account</div>
+
+      <div class="form-group">
+
+        <label for="resetPassword">New Password</label>
+
+        <input type="password" id="resetPassword" placeholder="••••••••" autocomplete="new-password">
+
+      </div>
+
+      <div class="form-group">
+
+        <label for="resetConfirmPassword">Confirm Password</label>
+
+        <input type="password" id="resetConfirmPassword" placeholder="••••••••" autocomplete="new-password">
+
+      </div>
+
+      <button id="resetPasswordBtn" class="auth-btn" onclick="handleResetPassword()">Reset Password</button>
+
+      <div id="resetPasswordMessage" class="auth-reset-message" aria-live="polite"></div>
+
+      <div class="auth-switch" onclick="showLoginAuthScreen()"><span>Return to Login</span></div>
+
+    </div>
+
+  </div>
+
+  <header class="app-    <div class="section-divider"></div>
+    <div class="section-title"><i class="fa-solid fa-wallet" style="color:var(--accent-gold);"></i> Financial Management</div>
+    <div class="finance-cards-strip" aria-label="Financial management sections">
+      <button class="finance-card" onclick="openFinanceSection('tithe')"><i class="fa-solid fa-hand-holding-heart"></i><strong>TITHE</strong><span>Fixed 10% of income</span></button>
+      <button class="finance-card" onclick="openFinanceSection('offering')"><i class="fa-solid fa-gift"></i><strong>OFFERING</strong><span>Set your percentage</span></button>
+      <button class="finance-card" onclick="switchTab('screen-expenses');renderExpenses();"><i class="fa-solid fa-receipt"></i><strong>EXPENSES</strong><span>Record spending</span></button>
+      <button class="finance-card" onclick="openFinanceSection('investment')"><i class="fa-solid fa-chart-line"></i><strong>INVESTMENTS</strong><span>Track returns</span></button>
+      <button class="finance-card" onclick="openFinanceSection('self_love')"><i class="fa-solid fa-heart"></i><strong>SELF LOVE</strong><span>Personal spending</span></button>
+      <button class="finance-card" onclick="openFinanceSection('capital')"><i class="fa-solid fa-circle-plus"></i><strong>CAPITAL INJECTION</strong><span>Manage contributions</span></button>
+    </div>
+    <button class="income-main-btn" onclick="switchTab('screen-perfumes')"><i class="fa-solid fa-money-bill-wave"></i> INCOME</button>
+
+ferings-grid">
+
+      <div class="offer-card" onclick="switchTab('screen-perfumes')">
+
+        <div class="offer-card-bg" style="background-image:url('images/glamo1.jpg');"></div>
+
+        <div class="offer-card-overlay">
+
+          <div class="offer-card-title">Perfume</div>
+
+          <div class="offer-card-desc">Record a New Sale</div>
+
+        </div>
+
+      </div>
+
+      <div class="offer-card" onclick="switchTab('screen-sales-progress'); renderSalesProgress();">
+
+        <div class="offer-card-bg" style="background-image:url('images/glamo2.jpg'); filter:brightness(.55);"></div>
+
+        <div class="offer-card-overlay">
+
+          <div class="offer-card-title">Sales Progress</div>
+
+          <div class="offer-card-desc">Review & Analyse Sales</div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="section-divider"></div>
+
+    <div class="quick-reorder-section">
+
+      <div class="quick-reorder-info">
+
+        <div class="quick-reorder-icon"><i class="fa-solid fa-chart-line"></i></div>
+
+        <div>
+
+          <div class="reorder-text-main">Quick Sales Review</div>
+
+          <div class="reorder-text-sub">Daily, weekly, monthly or custom range</div>
+
+        </div>
+
+      </div>
+
+      <button class="reorder-btn" onclick="switchTab('screen-sales-progress'); renderSalesProgress();">Review</button>
+
+    </div>
+
+    <div class="quick-reorder-section">
+
+      <div class="quick-reorder-info">
+
+        <div class="quick-reorder-icon"><i class="fa-solid fa-calendar-days"></i></div>
+
+        <div>
+
+          <div class="reorder-text-main">Monthly Review</div>
+
+          <div class="reorder-text-sub">Open this month's complete summary</div>
+
+        </div>
+
+      </div>
+
+      <div class="monthly-review-actions">
+      <button class="monthly-review-btn" onclick="openMonthlyReview()">Monthly Review</button>
+
+      <button class="monthly-review-btn" onclick="openOldSales()">OLD SALES</button>
+      <button class="monthly-review-btn" onclick="switchTab('screen-expenses'); renderExpenses();">Expenses</button>
+      </div>
+
+    </div>
+
+<button class="history-home-btn" onclick="openHistory()">
+
+      <i class="fa-solid fa-clock-rotate-left"></i> HISTORY
+
+    </button>
+
+    <button class="logout-main-btn" onclick="handleLogout()">
+
+      <i class="fa-solid fa-right-from-bracket"></i> Log Out
+
+    </button>
+
+  </div>
+
+  <div id="screen-finance" class="app-screen"><div class="section-title" id="financeScreenTitle">Financial Management</div><div id="financeManagementContent"></div><button class="finance-back-btn" onclick="switchTab('screen-home',document.getElementById('nav-home-btn'))"><i class="fa-solid fa-arrow-left"></i> Back to Home</button></div>
+
+<!-- SCREEN: HISTORY & FINANCIAL RECONCILIATION -->
+
+  <div id="screen-history" class="app-screen history-screen">
+
+    <div class="section-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--accent-gold);"></i> HISTORY</div>
+
+    <div class="history-period-card">
+
+      <div class="history-period-tabs">
+
+        <button id="historyTabDaily" class="history-period-tab active" onclick="setHistoryMode('daily')">DAILY</button>
+
+        <button id="historyTabWeekly" class="history-period-tab" onclick="setHistoryMode('weekly')">WEEKLY</button>
+
+        <button id="historyTabMonthly" class="history-period-tab" onclick="setHistoryMode('monthly')">MONTHLY</button>
+
+        <button id="historyTabCustom" class="history-period-tab" onclick="setHistoryMode('custom')">CUSTOM</button>
+
+      </div>
+
+      <div id="historyDailyControls" class="history-date-row single"><div><div class="history-period-label">Selected Date</div><input id="historyDailyDate" class="date-control" type="date" onchange="renderHistory()"></div></div>
+
+      <div id="historyWeeklyControls" class="history-date-row single" style="display:none"><div><div class="history-period-label">Week</div><input id="historyWeekDate" class="date-control" type="date" onchange="renderHistory()"></div></div>
+
+      <div id="historyMonthlyControls" class="history-date-row single" style="display:none"><div><div class="history-period-label">Month</div><input id="historyMonth" class="date-control" type="month" onchange="renderHistory()"></div></div>
+
+      <div id="historyCustomControls" class="history-date-row" style="display:none"><div><div class="history-period-label">From Date</div><input id="historyFromDate" class="date-control" type="date" onchange="renderHistory()"></div><div><div class="history-period-label">To Date</div><input id="historyToDate" class="date-control" type="date" onchange="renderHistory()"></div></div>
+
+      <div id="historyPeriodLabel" class="history-note"></div>
+
+    </div>
+
+    <div id="historyDailySummary"></div>
+
+    <div class="history-section-card open" id="historySalesCard">
+
+      <button class="history-section-header" onclick="toggleHistorySection('historySalesCard')"><span class="history-section-title"><i class="fa-solid fa-money-bill-wave"></i> INCOME</span><i class="fa-solid fa-chevron-down history-section-chevron"></i></button>
+
+      <div class="history-section-content" id="historySalesContent"></div>
+
+    </div>
+
+    <div class="history-section-card" id="historyExpensesCard">
+
+      <button class="history-section-header" onclick="toggleHistorySection('historyExpensesCard')"><span class="history-section-title"><i class="fa-solid fa-receipt"></i> EXPENSES</span><i class="fa-solid fa-chevron-down history-section-chevron"></i></button>
+
+      <div class="history-section-content" id="historyExpensesContent"></div>
+
+    </div>
+
+    <div class="history-section-card" id="historyInvestmentsCard"><button class="history-section-header" onclick="toggleHistorySection('historyInvestmentsCard')"><span class="history-section-title">INVESTMENTS</span><i class="fa-solid fa-chevron-down history-section-chevron"></i></button><div class="history-section-content" id="historyInvestmentsContent"></div></div>
+<div class="history-section-card" id="historySelfLoveCard"><button class="history-section-header" onclick="toggleHistorySection('historySelfLoveCard')"><span class="history-section-title">SELF LOVE</span><i class="fa-solid fa-chevron-down history-section-chevron"></i></button><div class="history-section-content" id="historySelfLoveContent"></div></div>
+<div class="history-section-card" id="historyTitheCard"><button class="history-section-header" onclick="toggleHistorySection('historyTitheCard')"><span class="history-section-title">TITHE</span><i class="fa-solid fa-chevron-down history-section-chevron"></i></button><div class="history-section-content" id="historyTitheContent"></div></div>
+<div class="history-section-card" id="historyOfferingCard"><button class="history-section-header" onclick="toggleHistorySection('historyOfferingCard')"><span class="history-section-title">OFFERING</span><i class="fa-solid fa-chevron-down history-section-chevron"></i></button><div class="history-section-content" id="historyOfferingContent"></div></div>
+<div class="history-recon-card"><div class="history-section-title" style="margin-bottom:10px">FINANCIAL RECONCILIATION</div><div id="historyReconContent"></div></div>
+
+    <button class="history-pdf-btn" onclick="generateHistoryPDF()"><i class="fa-solid fa-file-pdf"></i> GENERATE PDF</button>
+
+  </div>
+
+  <!-- SCREEN: EXPENSES -->
+
+  <div id="screen-expenses" class="app-screen">
+
+    <div class="section-title"><i class="fa-solid fa-receipt" style="color:var(--accent-gold);"></i> Expenses</div>
+
+    <div class="expenses-card">
+
+      <h3 style="font-size:1rem;font-weight:900;margin-bottom:12px;">Expense Categories</h3>
+
+      <div id="expenseCategoryList" class="expense-category-list"></div>
+
+    </div>
+
+    <div class="expenses-card">
+
+      <div class="expense-records-title">EXPENSE RECORDS</div>
+
+      <div id="expensesList"></div>
+
+    </div>
+
+    <div class="expenses-card">
+
+      <div class="expense-total-box">
+
+        <span class="expense-total-label">TOTAL EXPENSES</span>
+
+        <span id="expenseTotalValue" class="expense-total-value">0 TZS</span>
+
+      </div>
+
+    </div>
+
+    <!-- Preserved edit form state; the visible entry form is rendered inside the open category. -->
+
+    <div id="expenseEditState" style="display:none;">
+
+      <input id="expenseName" type="text">
+
+      <input id="expenseDate" class="date-control" type="date">
+
+      <input id="expenseAmount" class="number-control" type="number">
+
+      <textarea id="expenseNotes"></textarea>
+
+      <select id="expenseCategory" class="select-control"></select>
+
+      <span id="expenseFormTitle"></span>
+
+      <button id="expenseSaveBtn"></button>
+
+      <button id="expenseCancelBtn"></button>
+
+    </div>
+
+  </div>
+
+  <!-- SCREEN 2: PERFUME SALE ENTRY -->
+
+  <div id="screen-perfumes" class="app-screen">
+
+    <div class="section-title">
+
+      <i class="fa-solid fa-spray-can-sparkles" style="color:var(--accent-gold);"></i> Perfume Sale
+
+    </div>
+
+    <div class="sales-entry-card">
+
+      <h3 id="saleFormTitle">Record Individual Sale</h3>
+
+      <div class="form-group">
+
+        <label>Perfume Name *</label>
+
+        <input id="salePerfumeName" type="text" placeholder="e.g. Oud Royal">
+
+      </div>
+
+      <div class="form-group">
+        <label>Customer Name</label>
+        <input id="saleCustomerName" type="text" placeholder="e.g. John">
+      </div>
+      <div class="form-row">
+
+        <div class="form-group">
+
+          <label>MLS *</label>
+
+          <select id="saleMls" class="select-control">
+
+            <option value="10 ml">10 ml</option>
+
+            <option value="20 ml">20 ml</option>
+
+            <option value="30 ml">30 ml</option>
+
+            <option value="50 ml">50 ml</option>
+
+            <option value="100 ml">100 ml</option>
+
+          </select>
+
+        </div>
+
+        <div class="form-group">
+
+          <label>Quantity *</label>
+
+          <input id="saleQuantity" class="number-control" type="number" min="1" value="1" oninput="calculateCurrentTotal()">
+
+        </div>
+
+        <div class="form-group">
+
+          <label>Price per Unit (TZS) *</label>
+
+          <input id="salePrice" class="number-control" type="number" min="0" step="100" placeholder="25000" oninput="calculateCurrentTotal()">
+
+        </div>
+
+      </div>
+
+      <div class="form-group">
+
+        <label>Total Price (TZS)</label>
+
+        <input id="saleTotalCalculated" class="number-control" type="number" readonly disabled placeholder="0">
+
+      </div>
+
+      <div class="form-group">
+
+        <label>Method of Payment *</label>
+
+        <div id="salePaymentOptions" class="payment-main-grid">
+
+          <button id="saleCashBtn" type="button" class="pay-option-btn" onclick="selectSalePayment('Cash')">
+
+            <i class="fa-solid fa-money-bill-wave" style="color:var(--accent-gold);"></i>
+
+            <span>Cash</span>
+
+          </button>
+
+          <button id="saleMpesaBtn" type="button" class="pay-option-btn" onclick="selectSalePayment('MPESA')">
+
+            <i class="fa-solid fa-mobile-screen-button" style="color:var(--accent-gold);"></i>
+
+            <span>MPESA</span>
+
+          </button>
+
+        </div>
+
+          <div id="saleMobileBox" style="display:contents">
+
+
+          <div class="payment-main-grid" style="margin-top:8px;">
+
+
+            <button id="saleLIPA-MPESABtn" type="button" class="pay-option-btn" onclick="selectSalePayment('LIPA-MPESA')">LIPA-MPESA</button>
+            <button id="saleCrdbBtn" type="button" class="pay-option-btn" onclick="selectSalePayment('CRDB')">CRDB</button>
+
+
+
+            <button id="saleSelcomBtn" type="button" class="pay-option-btn" onclick="selectSalePayment('SELCOM')">SELCOM</button>
+
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="form-group">
+
+        <label>Sale Date</label>
+
+        <input id="saleDate" class="date-control" type="date">
+
+      </div>
+
+      <button type="button" id="saleSaveBtn" class="sales-save-btn" onclick="saveSale()">
+
+        <i class="fa-solid fa-plus"></i> Add Sale
+
+      </button>
+
+      <button type="button" id="saleCancelBtn" class="reorder-btn" style="width:100%;margin-top:8px;display:none;" onclick="cancelSaleEdit()">Cancel Edit</button>
+
+    </div>
+
+    <!-- PRESERVED SALES PROGRESS STATE / RECORDED LIST -->
+
+    <div class="progress-panel">
+
+      <h3>Recorded Sales List</h3>
+
+      <div id="recordedSalesProgressList"></div>
+
+    </div>
+
+  </div>
+
+  <!-- SCREEN 3: AI GUIDE -->
+
+  <div id="screen-ai" class="app-screen">
+
+    <div class="ambient-glow"></div>
+
+    <div id="soonToast" class="coming-soon-toast">
+
+      <div class="toast-icon-wrap"><i class="fas fa-bolt"></i></div>
+
+      <div class="toast-info">
+
+        <h4 style="font-weight:900; text-transform:uppercase;">Coming Soon!</h4>
+
+        <p style="font-size:0.78rem;">Our intelligent AI curator is currently running final model training loops.</p>
+
+      </div>
+
+    </div>
+
+    <div class="ai-screen-wrap">
+
+      <div class="teaser-image-card" onclick="igniteTeaserToast()">
+
+        <img src="images/glamo3.jpg" alt="AI Neural Guide">
+
+        <div class="image-overlay"></div>
+
+      </div>
+
+      <div class="ai-badge">
+
+        <i class="fas fa-circle-nodes" style="color:#FFA500;"></i> Smart Engine v2.0
+
+      </div>
+
+      <h1 class="ai-title">Appearich <br><span>AI Guide</span></h1>
+
+      <p class="ai-sub">Tap anywhere on the teaser card above or below to test the matrix preparation status.</p>
+
+      <button class="status-pill-btn" onclick="igniteTeaserToast()">
+
+        <i class="fas fa-robot"></i> Initialize AI Exploration
+
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- SALES PROGRESS SCREEN -->
+
+  <div id="screen-sales-progress" class="app-screen">
+
+    <div class="section-title">
+
+      <i class="fa-solid fa-chart-column" style="color:var(--accent-gold);"></i> Sales Progress
+
+    </div>
+
+    <div class="progress-panel">
+
+      <div class="review-tabs">
+
+        <button id="tabDaily" class="review-tab active" onclick="setReviewMode('daily')">Daily</button>
+
+        <button id="tabWeekly" class="review-tab" onclick="setReviewMode('weekly')">Weekly</button>
+
+        <button id="tabMonthly" class="review-tab" onclick="setReviewMode('monthly')">Monthly</button>
+
+      </div>
+
+      <div id="dailyFilters">
+
+        <div class="form-group">
+
+          <label for="dailyDate">Choose Date</label>
+
+          <input id="dailyDate" class="date-control" type="date" onchange="renderSalesProgress()">
+
+        </div>
+
+      </div>
+
+      <div id="monthlyFilters" style="display:none;">
+
+        <div class="form-group">
+
+          <label for="reviewMonth">Choose Month</label>
+
+          <input id="reviewMonth" class="date-control" type="month" onchange="renderSalesProgress()">
+
+        </div>
+
+      </div>
+
+      <div id="customFilters" style="display:none;">
+
+        <div class="form-row">
+
+          <div class="form-group">
+
+            <label for="rangeFrom">From</label>
+
+            <input id="rangeFrom" class="date-control" type="date" onchange="renderSalesProgress()">
+
+          </div>
+
+          <div class="form-group">
+
+            <label for="rangeTo">To</label>
+
+            <input id="rangeTo" class="date-control" type="date" onchange="renderSalesProgress()">
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <button class="reorder-btn" style="width:100%;margin-bottom:12px;" onclick="showCustomRange()">Custom Date Range</button>
+
+      <div id="progressMetrics" class="review-grid"></div>
+
+      <div id="progressPerformance" style="margin-top:12px;"></div>
+
+    </div>
+
+    
+
+    <!-- BEST SELLERS SECTION -->
+
+    <div class="progress-panel">
+
+      <h3 style="display:flex; align-items:center; gap:8px;">
+
+        <i class="fa-solid fa-crown" style="color:var(--accent-gold);"></i> BEST SELLERS
+
+      </h3>
+
+      <div id="bestSellersList"></div>
+
+    </div>
+
+  </div>
+
+  <!-- SCREEN 4: SALES -->
+
+  <div id="screen-bookings" class="app-screen">
+
+    <div class="section-title">
+
+      <i class="fa-solid fa-receipt" style="color:var(--accent-gold);"></i> Sales History
+
+    </div>
+
+    <div id="bookingsListContainer"></div>
+
+  </div>
+
+  <!-- SCREEN 5: PROFILE -->
+
+  <div id="screen-profile" class="app-screen">
+
+    <div class="profile-header-card">
+
+      <div class="profile-avatar" id="profAvatar">U</div>
+
+      <div class="profile-name" id="profName">Logged-in User</div>
+
+      <div class="profile-phone" id="profPhone">+255 764 519 027</div>
+
+    </div>
+
+    <a href="https://wa.me/255764519027?text=Hello%20Appearich%20Help%20Center!%20I%20need%20assistance." target="_blank" class="whatsapp-support-btn">
+
+      <i class="fa-brands fa-whatsapp" style="font-size:1.3rem;"></i> WhatsApp Help Center
+
+    </a>
+
+    <div class="loyalty-card">
+
+      <div class="loyalty-header">
+
+        <span class="loyalty-title"><i class="fa-solid fa-crown"></i> Loyalty Rewards</span>
+
+        <span class="loyalty-badge" id="loyaltyCountBadge">Total Orders: 0</span>
+
+      </div>
+
+      <p style="font-size:0.75rem; color:var(--text-sub); margin-bottom:8px;" id="loyaltySubText">Every 5th order receives FREE DELIVERY!</p>
+
+      <div class="stamps-row" id="stampsRow">
+
+        <div class="stamp-dot">1</div>
+
+        <div class="stamp-dot">2</div>
+
+        <div class="stamp-dot">3</div>
+
+        <div class="stamp-dot">4</div>
+
+        <div class="stamp-dot"><i class="fa-solid fa-gift"></i></div>
+
+      </div>
+
+    </div>
+
+    <button class="logout-main-btn" onclick="handleLogout()">
+
+      <i class="fa-solid fa-right-from-bracket"></i> Log Out
+
+    </button>
+
+  </div>
+
+  <!-- SCREEN 6: STOCKS -->
+
+  <div id="screen-stocks" class="app-screen">
+
+    <div class="section-title">
+
+      <i class="fa-solid fa-boxes-stacked" style="color:var(--accent-gold);"></i> Stocks
+
+    </div>
+
+    <div id="stocksMainArea">
+
+      <div class="stock-header-wrapper">
+
+        <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-sub);">STOCK ACTIVITIES</div>
+
+        <button class="stock-history-btn" onclick="openStockHistoryModal()">
+
+          <i class="fa-solid fa-clock-rotate-left"></i> Activities History
+
+        </button>
+
+      </div>
+
+      
+
+      <!-- A — Oil Bottles -->
+
+      <div class="accordion-item">
+
+        <div class="accordion-header" onclick="toggleAccordion('oilBottlesAcc')">
+
+          <span>A — Oil Bottles</span>
+
+          <i class="fa-solid fa-chevron-down" id="oilBottlesAccIcon"></i>
+
+        </div>
+
+        <div id="oilBottlesAcc" class="accordion-content">
+
+          <div class="sales-entry-card" style="box-shadow:none; padding:12px; border:1px solid var(--card-border);">
+
+            <h4 id="oilFormTitle" style="font-size:0.85rem; margin-bottom:8px;">Add Oil Bottle</h4>
+
+            <div class="form-group"><label>Name / Size</label><input id="oilName" type="text" placeholder="e.g. Lavender 500ml"></div>
+
+            <div class="form-row">
+
+              <div class="form-group"><label>Current</label><input id="oilCurrent" class="number-control" type="number" min="0" oninput="calcOilRem()"></div>
+
+              <div class="form-group"><label>Used</label><input id="oilUsed" class="number-control" type="number" min="0" oninput="calcOilRem()"></div>
+
+            </div>
+
+            <div class="form-group"><label>Remaining (Auto Calculated)</label><input id="oilRemaining" class="number-control" type="number" readonly disabled></div>
+
+            <button type="button" id="oilSaveBtn" class="sales-save-btn" onclick="saveOilBottle()"><i class="fa-solid fa-plus"></i> Save Record</button>
+
+            <button type="button" id="oilCancelBtn" class="reorder-btn" style="width:100%;margin-top:6px;display:none;" onclick="resetOilForm()">Cancel Edit</button>
+
+          </div>
+
+          <div id="oilBottlesList" style="margin-top:12px;"></div>
+
+        </div>
+
+      </div>
+
+      <!-- B — Perfume Bottles -->
+
+      <div class="accordion-item">
+
+        <div class="accordion-header" onclick="toggleAccordion('perfumeBottlesAcc')">
+
+          <span>B — Perfume Bottles</span>
+
+          <i class="fa-solid fa-chevron-down" id="perfumeBottlesAccIcon"></i>
+
+        </div>
+
+        <div id="perfumeBottlesAcc" class="accordion-content">
+
+          <div class="sales-entry-card" style="box-shadow:none; padding:12px; border:1px solid var(--card-border);">
+
+            <h4 id="pBottleFormTitle" style="font-size:0.85rem; margin-bottom:8px;">Add Perfume Bottle Boxes</h4>
+
+            <div class="form-group">
+
+              <label>Bottle Size</label>
+
+              <select id="pBottleSize" class="select-control" onchange="calcPBottlePCS()">
+
+                <option value="10 ml">10 ml (273 PCS/Box)</option>
+
+                <option value="30 ml">30 ml (140 PCS/Box)</option>
+
+                <option value="50 ml">50 ml (70 PCS/Box)</option>
+
+              </select>
+
+            </div>
+
+            <div class="form-row">
+
+              <div class="form-group"><label>Boxes Brought</label><input id="pBoxesBrought" class="number-control" type="number" min="0" oninput="calcPBottlePCS()"></div>
+
+              <div class="form-group"><label>Boxes Used</label><input id="pBoxesUsed" class="number-control" type="number" min="0" oninput="calcPBottlePCS()"></div>
+
+            </div>
+
+            <div class="stock-grid-3" style="margin-bottom:12px;">
+
+              <div><div class="stock-stat-lbl">Total PCS</div><div id="pTotalPcsLbl" class="stock-stat-val">0</div></div>
+
+              <div><div class="stock-stat-lbl">Used PCS</div><div id="pUsedPcsLbl" class="stock-stat-val">0</div></div>
+
+              <div><div class="stock-stat-lbl">Available PCS</div><div id="pAvailPcsLbl" class="stock-stat-val">0</div></div>
+
+            </div>
+
+            <button type="button" id="pBottleSaveBtn" class="sales-save-btn" onclick="savePerfumeBottleBox()"><i class="fa-solid fa-plus"></i> Save Box Record</button>
+
+            <button type="button" id="pBottleCancelBtn" class="reorder-btn" style="width:100%;margin-top:6px;display:none;" onclick="resetPBottleForm()">Cancel Edit</button>
+
+          </div>
+
+          <div id="perfumeBottlesList" style="margin-top:12px;"></div>
+
+        </div>
+
+      </div>
+
+      <!-- C — Specific Perfume Items -->
+
+      <div class="accordion-item">
+
+        <div class="accordion-header" onclick="toggleAccordion('specificPerfumesAcc')">
+
+          <span>C — Specific Perfume Items</span>
+
+          <i class="fa-solid fa-chevron-down" id="specificPerfumesAccIcon"></i>
+
+        </div>
+
+        <div id="specificPerfumesAcc" class="accordion-content">
+
+          <div class="sales-entry-card" style="box-shadow:none; padding:12px; border:1px solid var(--card-border);">
+
+            <h4 id="specFormTitle" style="font-size:0.85rem; margin-bottom:8px;">Add Perfume Item</h4>
+
+            <div class="form-group"><label>Perfume Name *</label><input id="specName" type="text" placeholder="e.g. Oud Royal"></div>
+
+            <div class="form-row">
+
+              <div class="form-group"><label>Current</label><input id="specCurrent" class="number-control" type="number" min="0" oninput="calcSpecRem()"></div>
+
+              <div class="form-group"><label>Used</label><input id="specUsed" class="number-control" type="number" min="0" oninput="calcSpecRem()"></div>
+
+            </div>
+
+            <div class="form-group"><label>Remaining (Auto Calculated)</label><input id="specRemaining" class="number-control" type="number" readonly disabled></div>
+
+            <button type="button" id="specSaveBtn" class="sales-save-btn" onclick="saveSpecificPerfume()"><i class="fa-solid fa-plus"></i> Add Perfume</button>
+
+            <button type="button" id="specCancelBtn" class="reorder-btn" style="width:100%;margin-top:6px;display:none;" onclick="resetSpecForm()">Cancel Edit</button>
+
+          </div>
+
+          <div id="specificPerfumesList" style="margin-top:12px;"></div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- MONTHLY REVIEW MODAL -->
+
+  <div id="monthlyReviewModal" class="modal-overlay">
+
+    <div class="sheet-content full-screen">
+
+      <span class="sheet-close" onclick="closeSheet('monthlyReviewModal')">&times;</span>
+
+      <div class="modal-sticky-header"><div class="sheet-title">Monthly Review</div></div>
+
+      <div id="monthlyReviewContent"></div>
+
+    </div>
+
+  </div>
+
+  <!-- STOCKS HISTORY ACTIVITIES MODAL -->
+
+  <div id="stockHistoryModal" class="modal-overlay">
+
+    <div class="sheet-content full-screen">
+
+      <span class="sheet-close" onclick="closeSheet('stockHistoryModal')">&times;</span>
+
+      <div class="modal-sticky-header">
+
+        <div class="sheet-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--accent-gold);"></i> Stock Activities History</div>
+
+      </div>
+
+      <div id="stockHistoryContent" style="padding-top:10px;"></div>
+
+    </div>
+
+  </div>
+
+<!-- HISTORY ENTRY MODAL -->
+
+  <div id="historyEntryModal" class="modal-overlay">
+
+    <div class="sheet-content">
+
+      <span class="sheet-close" onclick="closeSheet('historyEntryModal')">&times;</span>
+
+      <div class="modal-sticky-header"><div id="historyEntryTitle" class="sheet-title">Add Entry</div></div>
+
+      <div class="form-group"><label id="historyEntryNameLabel">Name</label><input id="historyEntryName" type="text"></div>
+
+      <div class="form-group"><label>Amount (TZS)</label><input id="historyEntryAmount" class="number-control" type="number" min="0" step="100" placeholder="0"></div>
+
+      <div class="form-group"><label>Date</label><input id="historyEntryDate" class="date-control" type="date"></div>
+
+      <button class="sales-save-btn" onclick="saveHistoryEntry()">Save Entry</button>
+
+      <button id="historyEntryCancelEdit" class="reorder-btn" style="width:100%;margin-top:8px;display:none" onclick="cancelHistoryEntryEdit()">Cancel Edit</button>
+
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAVIGATION -->
+
+  <nav class="bottom-nav" id="mainNavBar" style="display:none;">
+
+    <button id="nav-home-btn" class="nav-item active" onclick="switchTab('screen-home', this)">
+
+      <i class="fa-solid fa-house"></i>
+
+      <span>Home</span>
+
+    </button>
+
+    <button class="nav-item" onclick="switchTab('screen-ai', this)">
+
+      <i class="fa-solid fa-robot"></i>
+
+      <span>AI Guide</span>
+
+    </button>
+
+    <button class="nav-item" onclick="openHistory();">
+      <i class="fa-solid fa-clock-rotate-left"></i><span>History</span>
+    </button>
+
+    <button class="nav-item" onclick="switchTab('screen-profile', this)">
+
+      <i class="fa-solid fa-user"></i>
+
+      <span>Profile</span>
+
+    </button>
+
+
+
+  </nav>
+
+  <!-- SCREEN: OLD SALES / IMPORTED SALES HISTORY -->
+  <div id="screen-old-sales" class="app-screen old-sales-screen">
+    <div class="section-title">
+      <i class="fa-solid fa-clock-rotate-left" style="color:var(--accent-gold);"></i> OLD SALES
+    </div>
+
+    <div class="sales-entry-card">
+      <div class="old-sales-toolbar">
+        <button class="old-sales-import-btn" type="button" onclick="document.getElementById('oldSalesFileInput').click()">
+          <i class="fa-solid fa-file-excel"></i> Import Excel
+        </button>
+        <input id="oldSalesFileInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="importOldSalesExcel(event)">
+        <input id="oldSalesSearch" class="old-sales-search" type="search" placeholder="Search old sales..." oninput="renderOldSales()">
+      </div>
+      <div class="old-sales-note">
+        Imported records stay in their original Excel order. Later imports are appended and do not replace earlier imports. Historical values are displayed as imported and are not sorted or recalculated.
+      </div>
+      <div id="oldSalesCount" class="old-sales-count"></div>
+      <div id="oldSalesContent"></div>
+    </div>
+
+    <button class="old-sales-home-btn" onclick="switchTab('screen-home', document.getElementById('nav-home-btn'))">
+      <i class="fa-solid fa-house"></i> Back to Home
+    </button>
+  </div>
+  <script>
+      // INCOME CALCULATIONS: preserve the existing income/sales logic. Only the requested Tithe calculation is added.
+      // FINANCIAL RECONCILIATION: existing Balance, Cash, CRDB, expenses, capital and debit logic remains unchanged.
+
+    const SUPABASE_URL = 'https://zudqubbglwphfxaviqsg.supabase.co';
+
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1ZHF1YmJnbHdwaGZ4YXZpcXNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NjcyNTUsImV4cCI6MjA5ODA0MzI1NX0.7pRbRqz9-5gN8SG_ALn5ecHOWQofykPvhbrE2HQROCE';
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    
+
+    let currentUser = null;
+
+    let currentUsername = "";
+
+    let currentUserPhone = "";
+
+    let isRegisterMode = false;
+
+    let deferredPrompt = null;
+
+    
+
+    let oldSalesImports = [];
+      oldSalesImports = [];
+    let activeOrders = [];
+
+    let expenses = [];
+
+    
+
+    let selectedSalePayment = '';
+
+    let selectedMobileProvider = '';
+
+    let historyRealtimeChannel = null;
+
+let historyMode = 'daily';
+
+    let historyEditingType = null;
+
+    let historyEditingId = null;
+
+    let capitalInjections = [];
+    let financialRecords = [];
+    let offeringPercentage = 0;
+    let investmentPercentage = 0;
+    let selfLovePercentage = 0;
+    let financeEditingId = null;
+    let financeCurrentType = null;
+
+    let debitCollections = [];
+
+    let reviewMode = 'daily';
+
+    let editingSaleId = null;
+
+    // Stock state
+
+    let oilBottleStocks = [];
+
+    let perfumeBottleStocks = [];
+
+    let specificPerfumeStocks = [];
+
+    
+
+    let editingOilId = null;
+
+    let editingPBottleId = null;
+
+    let editingSpecId = null;
+
+    const BOTTLE_FIXED_PCS = {
+
+      '10 ml': 273,
+
+      '30 ml': 140,
+
+      '50 ml': 70
+
+    };
+
+    const todayISO = () => new Date().toISOString().slice(0,10);
+
+    const monthISO = () => new Date().toISOString().slice(0,7);
+
+    function escapeHtml(value) {
+
+      return String(value ?? '').replace(/[&<>"']/g, c => ({
+
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+
+      }[c]));
+
+    }
+
+    
+
+// CHANGE CURRENCY HERE: the existing money() function controls displayed currency formatting.
+    function money(v) { return Number(v || 0).toLocaleString() + ' TZS'; }
+
+    function calculateCurrentTotal() {
+
+      const q = Number(document.getElementById('saleQuantity').value || 0);
+
+      const p = Number(document.getElementById('salePrice').value || 0);
+
+      document.getElementById('saleTotalCalculated').value = q * p;
+
+    }
+
+    if ('serviceWorker' in navigator) {
+
+      window.addEventListener('load', () => {
+
+        navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+
+      });
+
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+
+      e.preventDefault();
+
+      deferredPrompt = e;
+
+      const btn = document.getElementById('pwaInstallBtn');
+
+      if (btn) btn.style.display = 'flex';
+
+    });
+
+    function installPWA() {
+
+      if (!deferredPrompt) return;
+
+      deferredPrompt.prompt();
+
+      deferredPrompt.userChoice.then((choiceResult) => {
+
+        if (choiceResult.outcome === 'accepted') document.getElementById('pwaInstallBtn').style.display = 'none';
+
+        deferredPrompt = null;
+
+      });
+
+    }
+
+    // ==================== PERMANENT SUPABASE STATE ====================
+
+    let realtimeChannel = null;
+
+    let dataSyncInProgress = false;
+
+    async function loadCurrentUserState(userId) {
+
+      if (!userId) return;
+
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+
+      if (userError || !user || user.id !== userId) throw (userError || new Error('Authenticated user could not be verified.'));
+
+      currentUser = user;
+
+      await fetchAndSetupUserData(userId);
+
+      await Promise.all([
+
+        syncSalesFromSupabase(),
+
+        
+
+        syncExpensesFromSupabase(),
+
+        syncAllStocksFromSupabase()
+
+      ]);
+
+      setupHistoryRealtime();
+
+      setupRealtimeSubscriptions();
+
+    }
+
+    async function syncEverythingFromSupabase() {
+
+      if (!currentUser || dataSyncInProgress) return;
+
+      dataSyncInProgress = true;
+
+      try {
+
+        // Supabase is always authoritative. Never push in-memory/device state to it during login/reconnect.
+
+        await Promise.all([
+
+          syncSalesFromSupabase(),
+
+          
+
+          syncExpensesFromSupabase(),
+
+          syncAllStocksFromSupabase()
+
+        ]);
+
+      } finally {
+
+        dataSyncInProgress = false;
+
+      }
+
+    }
+
+    // ==================== PASSWORD RECOVERY ====================
+
+    async function handleForgotPassword() {
+
+      const emailEl = document.getElementById('authEmail');
+
+      const email = (emailEl?.value || '').trim();
+
+      if (!email) {
+
+        alert('Please enter your email address first.');
+
+        emailEl?.focus();
+
+        return;
+
+      }
+
+      const redirectUrl = window.location.origin + window.location.pathname;
+
+      try {
+
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+
+          redirectTo: redirectUrl
+
+        });
+
+        if (error) throw error;
+
+        alert('Password reset instructions have been sent to your email. Open the link in the email to create a new password.');
+
+      } catch (error) {
+
+        console.error('Password reset request failed:', error);
+
+        alert('Could not send the password reset email: ' + (error.message || 'Please try again.'));
+
+      }
+
+    }
+
+    function showResetPasswordScreen() {
+
+      const authContainer = document.querySelector('#screen-auth .auth-container:not(#resetPasswordContainer)');
+
+      const resetContainer = document.getElementById('resetPasswordContainer');
+
+      if (authContainer) authContainer.style.display = 'none';
+
+      if (resetContainer) resetContainer.style.display = 'block';
+
+      const message = document.getElementById('resetPasswordMessage');
+
+      if (message) {
+
+        message.textContent = '';
+
+        message.style.display = 'none';
+
+      }
+
+      const password = document.getElementById('resetPassword');
+
+      const confirm = document.getElementById('resetConfirmPassword');
+
+      if (password) password.value = '';
+
+      if (confirm) confirm.value = '';
+
+    }
+
+    async function handleResetPassword() {
+
+      const password = (document.getElementById('resetPassword')?.value || '');
+
+      const confirmPassword = (document.getElementById('resetConfirmPassword')?.value || '');
+
+      const message = document.getElementById('resetPasswordMessage');
+
+      if (!password || !confirmPassword) {
+
+        if (message) {
+
+          message.textContent = 'Please enter the new password and confirm it.';
+
+          message.style.display = 'block';
+
+        } else {
+
+          alert('Please enter the new password and confirm it.');
+
+        }
+
+        return;
+
+      }
+
+      if (password !== confirmPassword) {
+
+        if (message) {
+
+          message.textContent = 'Passwords do not match.';
+
+          message.style.display = 'block';
+
+        } else {
+
+          alert('Passwords do not match.');
+
+        }
+
+        return;
+
+      }
+
+      if (password.length < 6) {
+
+        if (message) {
+
+          message.textContent = 'Password must be at least 6 characters.';
+
+          message.style.display = 'block';
+
+        } else {
+
+          alert('Password must be at least 6 characters.');
+
+        }
+
+        return;
+
+      }
+
+      const button = document.getElementById('resetPasswordBtn');
+
+      if (button) button.disabled = true;
+
+      try {
+
+        const { error } = await supabaseClient.auth.updateUser({
+
+          password: password
+
+        });
+
+        if (error) throw error;
+
+        if (message) {
+
+          message.textContent = 'Password changed successfully. You can now sign in with your new password.';
+
+          message.style.display = 'block';
+
+        } else {
+
+          alert('Password changed successfully. You can now sign in with your new password.');
+
+        }
+
+        setTimeout(async () => {
+
+          try {
+
+            await supabaseClient.auth.signOut();
+
+          } catch (e) {}
+
+          showLoginAuthScreen();
+
+          const email = document.getElementById('authEmail');
+
+          const loginPassword = document.getElementById('authPassword');
+
+          if (loginPassword) loginPassword.value = '';
+
+          if (email) email.focus();
+
+        }, 1200);
+
+      } catch (error) {
+
+        console.error('Password update failed:', error);
+
+        if (message) {
+
+          message.textContent = 'Could not change password: ' + (error.message || 'Please request a new reset link.');
+
+          message.style.display = 'block';
+
+        } else {
+
+          alert('Could not change password: ' + (error.message || 'Please request a new reset link.'));
+
+        }
+
+      } finally {
+
+        if (button) button.disabled = false;
+
+      }
+
+    }
+
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+
+      if (event === 'PASSWORD_RECOVERY' && session) {
+
+        showResetPasswordScreen();
+
+        return;
+
+      }
+
+      if (event === 'SIGNED_OUT') {
+
+        if (realtimeChannel) {
+
+          await supabaseClient.removeChannel(realtimeChannel);
+
+          realtimeChannel = null;
+
+        }
+
+        return;
+
+      }
+
+    });
+
+    window.addEventListener('online', () => {
+
+      if (currentUser) syncEverythingFromSupabase().catch(err => console.error('Reconnect sync failed:', err));
+
+    });
+
+    document.addEventListener('visibilitychange', () => {
+
+      if (!document.hidden && currentUser) {
+
+        syncEverythingFromSupabase().catch(err => console.error('Visibility sync failed:', err));
+
+      }
+
+    });
+
+    window.addEventListener('focus', () => {
+
+      if (currentUser) syncEverythingFromSupabase().catch(err => console.error('Focus sync failed:', err));
+
+    });
+
+    window.addEventListener('DOMContentLoaded', async () => {
+
+      document.getElementById('saleDate').value = todayISO();
+
+    document.getElementById('historyDailyDate').value = todayISO();
+
+    document.getElementById('historyWeekDate').value = todayISO();
+
+    document.getElementById('historyMonth').value = monthISO();
+
+    document.getElementById('historyFromDate').value = todayISO();
+
+    document.getElementById('historyToDate').value = todayISO();
+
+      document.getElementById('dailyDate').value = todayISO();
+
+      document.getElementById('reviewMonth').value = monthISO();
+
+      document.getElementById('expenseDate').value = todayISO();
+
+      const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+
+      const isPasswordRecovery = new URLSearchParams(window.location.search).has('code') || /type=recovery/i.test(window.location.hash) || window.location.hash.includes('access_token=');
+
+      setTimeout(async () => {
+
+        document.getElementById('splash-screen').style.opacity = '0';
+
+        setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 500);
+
+        if (sessionError) {
+
+          console.error('Session restore error:', sessionError);
+
+          showAuthScreen();
+
+          return;
+
+        }
+
+        if (isPasswordRecovery) { showResetPasswordScreen(); return; }
+
+        if (session && session.user) {
+
+          try {
+
+            await loadCurrentUserState(session.user.id);
+
+          } catch (e) {
+
+            console.error('Failed to restore account state:', e);
+
+            alert('Could not load your saved account data. Please check your connection and try again.');
+
+            showAuthScreen();
+
+          }
+
+        } else {
+
+          showAuthScreen();
+
+        }
+
+      }, 800);
+
+    });
+
+    async function fetchAndSetupUserData(userId) {
+
+      const { data, error } = await supabaseClient
+
+        .from('profiles')
+
+        .select('username, phone, email')
+
+        .eq('id', userId)
+
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+
+        if (data.username) currentUsername = data.username;
+
+        if (data.phone) currentUserPhone = data.phone;
+
+      }
+
+      if (!currentUsername && currentUser?.email) currentUsername = currentUser.email.split('@')[0];
+
+      setupUserInterface();
+
+    }
+
+    async function setupRealtimeSubscriptions() {
+
+      if (!currentUser) return;
+
+      if (realtimeChannel) {
+
+        await supabaseClient.removeChannel(realtimeChannel);
+
+        realtimeChannel = null;
+
+      }
+
+      const userId = currentUser.id;
+
+      realtimeChannel = supabaseClient
+
+        .channel(`glamo-user-${userId}`)
+
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'sales', filter: `user_id=eq.${userId}` }, () => syncSalesFromSupabase())
+
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses', filter: `user_id=eq.${userId}` }, () => syncExpensesFromSupabase())
+
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'oil_bottles', filter: `user_id=eq.${userId}` }, () => syncAllStocksFromSupabase())
+
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'perfume_bottles', filter: `user_id=eq.${userId}` }, () => syncAllStocksFromSupabase())
+
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'specific_perfumes', filter: `user_id=eq.${userId}` }, () => syncAllStocksFromSupabase())
+
+        .subscribe((status) => {
+
+          if (status === 'SUBSCRIBED') console.log('Appearich realtime synchronization active.');
+
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.error('Realtime subscription error:', status);
+
+        });
+
+    }
+
+    async function syncSalesFromSupabase() {
+
+      if (!currentUser) return;
+
+      const { data, error } = await supabaseClient
+
+        .from('sales')
+
+        .select('*')
+
+        .eq('user_id', currentUser.id)
+
+        .order('created_at', { ascending: false });
+
+      if (error) {
+
+        console.error('Error fetching sales from Supabase:', error);
+
+        renderRecordedSales(); renderBookings(); renderSalesProgress(); updateLoyaltyUI();
+
+        throw error;
+
+      }
+
+      activeOrders = (data || []).map(row => ({
+
+        id: row.id,
+
+        user_id: row.user_id,
+
+        customerName: row.customer_name || '',
+        perfumeName: row.perfume_name || 'Unknown Perfume',
+
+        
+
+      mls: row.mls || '',quantity: Number(row.quantity || 1),
+
+        price: Number(row.price || 0),
+
+        total: Number(row.total || 0),
+
+        paymentMethod: row.payment_method || '',
+
+        date: row.sale_date || todayISO(),
+
+        created_at: row.created_at,
+
+        updated_at: row.updated_at
+
+      }));
+
+      renderRecordedSales();
+
+      renderBookings();
+
+      renderSalesProgress();
+
+      updateLoyaltyUI();
+
+    }
+
+    function showAuthScreen() {
+
+      document.getElementById('screen-auth').style.display = 'flex';
+
+      showLoginAuthScreen();
+
+      document.getElementById('mainHeader').style.display = 'none';
+
+      document.getElementById('mainNavBar').style.display = 'none';
+
+      document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
+
+    }
+
+    function setupUserInterface() {
+
+      document.getElementById('screen-auth').style.display = 'none';
+
+      document.getElementById('mainHeader').style.display = 'flex';
+
+      document.getElementById('mainNavBar').style.display = 'flex';
+
+      switchTab('screen-home', document.getElementById('nav-home-btn'));
+
+      loadOldSalesImports();
+      document.getElementById('heroGreeting').innerText = `Welcome, ${currentUsername}!`;
+
+      document.getElementById('profName').innerText = currentUsername;
+
+      document.getElementById('profAvatar').innerText = currentUsername.charAt(0).toUpperCase();
+
+      document.getElementById('profPhone').innerText = currentUserPhone || '';
+
+    }
+
+    function showLoginAuthScreen() {
+
+      document.getElementById('resetPasswordContainer').style.display = 'none';
+
+      document.querySelector('#screen-auth .auth-container:not(#resetPasswordContainer)').style.display = 'block';
+
+      isRegisterMode = false;
+
+      document.getElementById('authTitle').innerText = 'Welcome Back';
+
+      document.getElementById('authSub').innerText = 'Sign in to your Appearich account';
+
+      document.getElementById('authSubmitBtn').innerText = 'Sign In';
+
+      document.getElementById('authSwitchText').innerHTML = "Don't have an account? <span>Register here</span>";
+
+      document.getElementById('usernameGroup').style.display = 'none';
+
+      document.getElementById('phoneGroup').style.display = 'none';
+
+      document.getElementById('confirmPasswordGroup').style.display = 'none';
+
+      document.getElementById('forgotPasswordLink').style.display = 'block';
+
+    }
+
+    function toggleAuthMode() {
+
+      document.getElementById('resetPasswordContainer').style.display = 'none';
+
+      document.querySelector('#screen-auth .auth-container:not(#resetPasswordContainer)').style.display = 'block';
+
+      isRegisterMode = !isRegisterMode;
+
+      document.getElementById('authTitle').innerText = isRegisterMode ? 'Create Account' : 'Welcome Back';
+
+      document.getElementById('authSub').innerText = isRegisterMode ? 'Sign up to start using Appearich' : 'Sign in to your Appearich account';
+
+      document.getElementById('authSubmitBtn').innerText = isRegisterMode ? 'Register' : 'Sign In';
+
+      document.getElementById('authSwitchText').innerHTML = isRegisterMode ? 'Already have an account? <span>Sign In</span>' : "Don't have an account? <span>Register here</span>";
+
+      document.getElementById('usernameGroup').style.display = isRegisterMode ? 'block' : 'none';
+
+      document.getElementById('phoneGroup').style.display = isRegisterMode ? 'block' : 'none';
+
+      document.getElementById('confirmPasswordGroup').style.display = isRegisterMode ? 'block' : 'none';
+
+      document.getElementById('forgotPasswordLink').style.display = isRegisterMode ? 'none' : 'block';
+
+    }
+
+    async function handleAuthSubmit() {
+
+      const email = document.getElementById('authEmail').value.trim();
+
+      const password = document.getElementById('authPassword').value;
+
+      const confirmPassword = document.getElementById('authConfirmPassword').value;
+
+      const username = document.getElementById('authUsername').value.trim();
+
+      const phone = document.getElementById('authPhone').value.trim();
+
+      if (!email || !password) { alert('Please enter both email and password.'); return; }
+
+      if (isRegisterMode) {
+
+        if (!username || !phone) { alert('Please provide both a username and a phone number.'); return; }
+
+        if (password !== confirmPassword) { alert('Passwords do not match.'); return; }
+
+        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+
+        if (error) { alert('Registration Error: ' + error.message); return; }
+
+        if (!data.user) { alert('Registration started. Please verify your email if required, then sign in.'); return; }
+
+        currentUser = data.user;
+
+        currentUsername = username;
+
+        currentUserPhone = phone;
+
+        const { error: profileError } = await supabaseClient.from('profiles').upsert([{ id: currentUser.id, username, email, phone }]);
+
+        if (profileError) { alert('Registration profile error: ' + profileError.message); return; }
+
+        await loadCurrentUserState(currentUser.id);
+
+        alert('Registration successful!');
+
+      } else {
+
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+        if (error) { alert('Login Error: ' + error.message); return; }
+
+        if (!data.user) { alert('Login failed: no authenticated user was returned.'); return; }
+
+        currentUser = data.user;
+
+        // Important: login always loads Supabase first. No stale device state is pushed to the database.
+
+        try {
+
+          await loadCurrentUserState(currentUser.id);
+
+        } catch (e) {
+
+          await supabaseClient.auth.signOut();
+
+          currentUser = null;
+
+          alert('Login succeeded, but your saved data could not be loaded: ' + e.message);
+
+        }
+
+      }
+
+    }
+
+    async function handleLogout() {
+
+      try {
+
+        if (realtimeChannel) {
+
+          await supabaseClient.removeChannel(realtimeChannel);
+
+  if (historyRealtimeChannel) {
+
+    await supabaseClient.removeChannel(historyRealtimeChannel);
+
+    historyRealtimeChannel = null;
+
+  }
+
+          realtimeChannel = null;
+
+        }
+
+        const { error } = await supabaseClient.auth.signOut();
+
+        if (error) throw error;
+
+      } catch (e) {
+
+        alert('Logout error: ' + e.message);
+
+        return;
+
+      }
+
+      // Only clear in-memory UI state. Nothing is deleted from Supabase.
+
+      currentUser = null;
+
+      currentUsername = '';
+
+      currentUserPhone = '';
+
+      activeOrders = [];
+
+      expenses = [];
+
+      oilBottleStocks = [];
+
+      perfumeBottleStocks = [];
+
+      specificPerfumeStocks = [];
+
+      showAuthScreen();
+
+    }
+
+    function toggleTheme() {
+
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+
+      const icon = document.querySelector('#themeToggleBtn i');
+
+      if (currentTheme === 'dark') {
+
+        document.documentElement.removeAttribute('data-theme');
+
+        icon.className = 'fa-solid fa-moon';
+
+      } else {
+
+        document.documentElement.setAttribute('data-theme', 'dark');
+
+        icon.className = 'fa-solid fa-sun';
+
+      }
+
+    }
+
+    function oldSalesStorageKey() {
+      return `appearich_old_sales_${currentUser?.id || 'guest'}`;
+    }
+
+    function loadOldSalesImports() {
+      try {
+        const saved = localStorage.getItem(oldSalesStorageKey());
+        oldSalesImports = saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        console.warn('Could not load Old Sales imports:', e);
+        oldSalesImports = [];
+      }
+      renderOldSales();
+    }
+
+    function saveOldSalesImports() {
+      try {
+        localStorage.setItem(oldSalesStorageKey(), JSON.stringify(oldSalesImports));
+      } catch (e) {
+        console.error('Could not save Old Sales imports:', e);
+        alert('Old Sales could not be saved on this device. Please check browser storage permissions.');
+      }
+    }
+
+    function openOldSales() {
+      switchTab('screen-old-sales', null);
+      loadOldSalesImports();
+      const search = document.getElementById('oldSalesSearch');
+      if (search) search.focus();
+    }
+
+    async function importOldSalesExcel(event) {
+      const input = event.target;
+      const files = Array.from(input.files || []);
+      if (!files.length) return;
+
+      if (typeof XLSX === 'undefined') {
+        alert('Excel import is unavailable because the Excel reader could not be loaded.');
+        input.value = '';
+        return;
+      }
+
+      let importedRows = 0;
+      try {
+        for (const file of files) {
+          const buffer = await file.arrayBuffer();
+          const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
+          for (const sheetName of (workbook.SheetNames || [])) {
+            const ws = workbook.Sheets[sheetName];
+            if (!ws) continue;
+
+            const matrix = XLSX.utils.sheet_to_json(ws, {
+              header: 1,
+              defval: '',
+              raw: false,
+              blankrows: true
+            });
+
+            if (!matrix.length) continue;
+
+            let headerIndex = 0;
+            while (headerIndex < matrix.length && matrix[headerIndex].every(v => String(v ?? '').trim() === '')) headerIndex++;
+            if (headerIndex >= matrix.length) continue;
+
+            const headers = matrix[headerIndex].map((v, i) => {
+              const text = String(v ?? '').trim();
+              return text || `Column ${i + 1}`;
+            });
+
+            const rows = matrix.slice(headerIndex + 1).map(row => {
+              const cells = [];
+              for (let i = 0; i < headers.length; i++) cells.push(row[i] ?? '');
+              return cells;
+            });
+
+            if (!rows.length) continue;
+
+            oldSalesImports.push({
+              id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+              fileName: file.name,
+              sheetName,
+              importedAt: new Date().toISOString(),
+              headers,
+              rows
+            });
+            importedRows += rows.length;
+          }
+        }
+
+        saveOldSalesImports();
+        renderOldSales();
+        alert(`${importedRows} old sales row${importedRows === 1 ? '' : 's'} imported successfully. Existing imports were kept.`);
+      } catch (error) {
+        console.error('Old Sales Excel import failed:', error);
+        alert('Could not import the Excel file: ' + (error.message || 'Unknown error.'));
+      } finally {
+        input.value = '';
+      }
+    }
+
+    function renderOldSales() {
+      const container = document.getElementById('oldSalesContent');
+      const countEl = document.getElementById('oldSalesCount');
+      if (!container) return;
+
+      const query = String(document.getElementById('oldSalesSearch')?.value || '').trim().toLowerCase();
+      let visibleCount = 0;
+      let globalNo = 0;
+
+      if (!oldSalesImports.length) {
+        if (countEl) countEl.textContent = 'No imported old sales yet.';
+        container.innerHTML = '<div class="old-sales-empty">Import an Excel (.xlsx or .xls) file to view your historical sales.</div>';
+        return;
+      }
+
+      const batches = oldSalesImports.map(batch => {
+        const rows = Array.isArray(batch.rows) ? batch.rows : [];
+        const headers = Array.isArray(batch.headers) ? batch.headers : [];
+        const filtered = rows.map((row, index) => ({ row, index })).filter(item =>
+          !query || item.row.some(cell => String(cell ?? '').toLowerCase().includes(query))
+        );
+
+        visibleCount += filtered.length;
+
+        const headerHasNo = headers.some(h => String(h).trim().toLowerCase() === 'no.');
+        const headerHtml = (headerHasNo ? [] : ['No.'])
+          .concat(headers, ['Actions'])
+          .map(h => `<th>${escapeHtml(String(h))}</th>`).join('');
+
+        const bodyHtml = filtered.map(item => {
+          const row = item.row;
+          const originalIndex = item.index;
+          globalNo++;
+          const noCell = headerHasNo ? '' : `<td>${globalNo}</td>`;
+          const cells = headers.map((_, i) => `<td>${escapeHtml(String(row[i] ?? ''))}</td>`).join('');
+          const actions = `<td class="old-sales-actions-cell"><button class="small-action" type="button" onclick="editOldSalesRow('${escapeHtml(batch.id)}', ${originalIndex})"><i class="fa-solid fa-pen"></i> Edit</button><button class="small-action delete" type="button" onclick="deleteOldSalesRow('${escapeHtml(batch.id)}', ${originalIndex})"><i class="fa-solid fa-trash"></i> Delete</button></td>`;
+          return `<tr id="old-sales-row-${escapeHtml(batch.id)}-${originalIndex}">${noCell}${cells}${actions}</tr>`;
+        }).join('');
+
+        if (!filtered.length) return '';
+
+        return `
+          <div class="old-sales-batch">
+            <div class="old-sales-batch-title">
+              <span>${escapeHtml(batch.fileName || 'Imported Excel')}</span>
+              <span class="old-sales-batch-meta">${escapeHtml(batch.sheetName || '')}</span>
+            </div>
+            <div class="old-sales-table-wrap">
+              <table class="old-sales-table">
+                <thead><tr>${headerHtml}</tr></thead>
+                <tbody>${bodyHtml}</tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const storedCount = oldSalesImports.reduce((n,b) => n + (Array.isArray(b.rows) ? b.rows.length : 0), 0);
+      if (countEl) {
+        countEl.textContent = query
+          ? `${visibleCount} matching row${visibleCount === 1 ? '' : 's'} shown`
+          : `${storedCount} historical row${storedCount === 1 ? '' : 's'} stored`;
+      }
+
+      container.innerHTML = batches || '<div class="old-sales-empty">No matching old sales found.</div>';
+    }
+
+    function editOldSalesRow(batchId, rowIndex) {
+      const batch = oldSalesImports.find(b => String(b.id) === String(batchId));
+      if (!batch || !Array.isArray(batch.rows) || !batch.rows[rowIndex]) return;
+      const rowEl = document.getElementById(`old-sales-row-${batchId}-${rowIndex}`);
+      if (!rowEl) return;
+      const row = batch.rows[rowIndex];
+      const headers = Array.isArray(batch.headers) ? batch.headers : [];
+      const headerHasNo = headers.some(h => String(h).trim().toLowerCase() === 'no.');
+      const noCell = headerHasNo ? '' : `<td>${rowIndex + 1}</td>`;
+      const inputs = headers.map((h, i) => `<td><input class="old-sales-edit-input" data-old-sales-col="${i}" value="${escapeHtml(String(row[i] ?? ''))}" aria-label="${escapeHtml(String(h))}"></td>`).join('');
+      rowEl.innerHTML = `${noCell}${inputs}<td class="old-sales-actions-cell"><button class="small-action" type="button" onclick="saveOldSalesRow('${escapeHtml(batchId)}', ${rowIndex})"><i class="fa-solid fa-check"></i> Save</button><button class="small-action" type="button" onclick="renderOldSales()"><i class="fa-solid fa-xmark"></i> Cancel</button></td>`;
+      rowEl.querySelector('.old-sales-edit-input')?.focus();
+    }
+
+    function saveOldSalesRow(batchId, rowIndex) {
+      const batch = oldSalesImports.find(b => String(b.id) === String(batchId));
+      const rowEl = document.getElementById(`old-sales-row-${batchId}-${rowIndex}`);
+      if (!batch || !rowEl) return;
+      const inputs = Array.from(rowEl.querySelectorAll('.old-sales-edit-input'));
+      if (!batch.rows[rowIndex]) return;
+      inputs.forEach((input, i) => { batch.rows[rowIndex][i] = input.value; });
+      saveOldSalesImports();
+      renderOldSales();
+    }
+
+    function deleteOldSalesRow(batchId, rowIndex) {
+      const batch = oldSalesImports.find(b => String(b.id) === String(batchId));
+      if (!batch || !Array.isArray(batch.rows) || !batch.rows[rowIndex]) return;
+      if (!confirm('Delete this imported historical sale? This cannot be undone.')) return;
+      batch.rows.splice(rowIndex, 1);
+      if (!batch.rows.length) {
+        oldSalesImports = oldSalesImports.filter(b => String(b.id) !== String(batchId));
+      }
+      saveOldSalesImports();
+      renderOldSales();
+    }
+
+
+    const FIXED_TITHE_PERCENTAGE = 10;
+    async function syncFinancialRecords(){
+      if(!currentUser)return;
+      const [rr,sr]=await Promise.all([
+        supabaseClient.from('financial_records').select('*').eq('user_id',currentUser.id).order('date',{ascending:false}),
+        supabaseClient.from('financial_settings').select('offering_percentage,investment_percentage,self_love_percentage').eq('user_id',currentUser.id).maybeSingle()
+      ]);
+      if(rr.error)throw rr.error;if(sr.error)throw sr.error;
+      financialRecords=(rr.data||[]).map(x=>({...x,amount:Number(x.amount||0),return_amount:Number(x.return_amount||0)}));
+      offeringPercentage=Number(sr.data?.offering_percentage||0);investmentPercentage=Number(sr.data?.investment_percentage||0);selfLovePercentage=Number(sr.data?.self_love_percentage||0);
+    }
+    function eligibleIncome(from='0000-01-01',to='9999-12-31'){
+      return activeOrders.filter(x=>x.date>=from&&x.date<=to).reduce((a,x)=>a+Number(x.total||0),0);
+    }
+    async function openFinanceSection(type){
+      financeCurrentType=type;financeEditingId=null;switchTab('screen-finance',null);
+      try{await syncHistoryEntries();await syncFinancialRecords();renderFinanceSection();}
+      catch(e){alert('Could not load financial records: '+e.message);}
+    }
+    function renderFinanceSection(){
+      const host=document.getElementById('financeManagementContent'),title=document.getElementById('financeScreenTitle');
+      const names={tithe:'TITHE',offering:'OFFERING',investment:'INVESTMENTS',self_love:'SELF LOVE',capital:'CAPITAL INJECTION'};
+      title.textContent=names[financeCurrentType]||'FINANCIAL MANAGEMENT';
+      if(financeCurrentType==='tithe'){
+        const income=eligibleIncome();
+        host.innerHTML=`<div class="finance-management-card"><h3>Fixed Tithe Allocation</h3><div class="finance-summary">Tithe is fixed at <b>10%</b> of eligible recorded income. This percentage cannot be changed.</div><p>Recorded income: <b>${money(income)}</b></p><div class="finance-record-amount" style="font-size:1.2rem;margin-top:10px">Tithe: ${money(income*.10)}</div><p class="expense-meta">Capital contributions are not income and are excluded.</p></div>`;return;
+      }
+      if(financeCurrentType==='offering'){
+        const income=eligibleIncome();
+        host.innerHTML=`<div class="finance-management-card"><h3>Offering Allocation</h3><div class="form-group"><label>Offering percentage (%)</label><input id="offeringPercentageInput" class="number-control" type="number" min="0" max="100" step=".1" value="${offeringPercentage}"></div><button class="sales-save-btn" onclick="saveOfferingPercentage()">Save Percentage</button><div class="finance-summary">Recorded income: <b>${money(income)}</b><br>Offering (${offeringPercentage}%): <b>${money(income*offeringPercentage/100)}</b></div></div>`;return;
+      }
+      if(financeCurrentType==='capital'){
+        const total=capitalInjections.reduce((a,x)=>a+Number(x.amount||0),0);
+        host.innerHTML=`<div class="finance-management-card"><h3>Capital Contributions</h3><div class="finance-summary">Total contributions: <b>${money(total)}</b></div><button class="history-add-btn" onclick="openHistoryEntryModal('capital')">+ ADD CAPITAL CONTRIBUTION</button>${capitalInjections.map(x=>`<div class="finance-record"><div class="finance-record-head"><div><div class="finance-record-name">${escapeHtml(x.name)}</div><div class="finance-record-meta">${escapeHtml(x.date||'')}</div></div><div class="finance-record-amount">${money(x.amount)}</div></div><div class="finance-record-actions"><button class="small-action" onclick="editHistoryEntry('capital','${x.id}')">Edit</button><button class="small-action delete" onclick="deleteHistoryEntry('capital','${x.id}').then(renderFinanceSection)">Delete</button></div></div>`).join('')||'<div class="expense-empty">No capital contributions recorded.</div>'}</div>`;return;
+      }
+      const inv=financeCurrentType==='investment',rows=financialRecords.filter(x=>x.record_type===financeCurrentType);
+      const total=rows.reduce((a,x)=>a+x.amount,0),returns=rows.reduce((a,x)=>a+x.return_amount,0);
+      const allocation=inv?investmentPercentage:selfLovePercentage;
+      const income=eligibleIncome();
+      host.innerHTML=`<div class="finance-management-card"><h3>${inv?'Investment record':'Personal spending record'}</h3><div class="finance-summary">${inv?`Invested: <b>${money(total)}</b><br>Returns: <b>${money(returns)}</b>`:`Total spending: <b>${money(total)}</b>`}<br>Optional allocation: <b>${allocation}%</b> of income (${money(income*allocation/100)})</div>
+      <div class="form-group"><label>Optional allocation percentage (%)</label><div class="finance-percent-row"><input id="financeAllocationInput" class="number-control" type="number" min="0" max="100" step=".1" value="${allocation}"><button class="reorder-btn" onclick="saveFinanceAllocation('${financeCurrentType}')">Save %</button></div></div>
+      <div class="form-group"><label>${inv?'Investment name':'Description'}</label><input id="financeRecordName" class="number-control"></div>
+      <div class="form-group"><label>${inv?'Amount invested':'Amount spent'} (TZS)</label><input id="financeRecordAmount" class="number-control" type="number" min="1"></div>
+      ${inv?'<div class="form-group"><label>Returns / profit (TZS)</label><input id="financeRecordReturn" class="number-control" type="number" min="0" value="0"></div>':''}
+      <div class="form-group"><label>Date</label><input id="financeRecordDate" class="date-control" type="date" value="${todayISO()}"></div>
+      <div class="form-group"><label>Notes (optional)</label><input id="financeRecordNotes" class="number-control"></div>
+      <button id="financeRecordSaveBtn" class="sales-save-btn" onclick="saveFinancialRecord()">${financeEditingId?'Update':'Save'} Record</button>
+      <button id="financeRecordCancelBtn" class="finance-back-btn" style="display:${financeEditingId?'block':'none'}" onclick="cancelFinancialRecordEdit()">Cancel Edit</button>
+      <h3 style="margin-top:18px">Records</h3>${rows.map(x=>`<div class="finance-record"><div class="finance-record-head"><div><div class="finance-record-name">${escapeHtml(x.name)}</div><div class="finance-record-meta">${escapeHtml(x.date)}${x.notes?' · '+escapeHtml(x.notes):''}${inv?'<br>Returns: '+money(x.return_amount):''}</div></div><div class="finance-record-amount">${money(x.amount)}</div></div><div class="finance-record-actions"><button class="small-action" onclick="editFinancialRecord('${x.id}')">Edit</button><button class="small-action delete" onclick="deleteFinancialRecord('${x.id}')">Delete</button></div></div>`).join('')||'<div class="expense-empty">No records yet.</div>'}</div>`;
+    }
+    async function saveOfferingPercentage(){
+      const v=Number(document.getElementById('offeringPercentageInput').value);
+      if(!Number.isFinite(v)||v<0||v>100){alert('Enter a percentage from 0 to 100.');return;}
+      const {error}=await supabaseClient.from('financial_settings').upsert({user_id:currentUser.id,offering_percentage:v},{onConflict:'user_id'});
+      if(error){alert(error.message);return;}offeringPercentage=v;renderFinanceSection();
+    }
+
+    async function saveFinanceAllocation(type){
+      const value=Number(document.getElementById('financeAllocationInput')?.value);
+      if(!Number.isFinite(value)||value<0||value>100){alert('Enter a percentage from 0 to 100.');return;}
+      const payload={user_id:currentUser.id,offering_percentage:offeringPercentage,investment_percentage:investmentPercentage,self_love_percentage:selfLovePercentage};
+      if(type==='investment')payload.investment_percentage=value;
+      if(type==='self_love')payload.self_love_percentage=value;
+      const {error}=await supabaseClient.from('financial_settings').upsert(payload,{onConflict:'user_id'});
+      if(error){alert('Could not save allocation: '+error.message);return;}
+      if(type==='investment')investmentPercentage=value;else selfLovePercentage=value;
+      renderFinanceSection();
+    }
+
+    async function saveFinancialRecord(){
+      const name=document.getElementById('financeRecordName').value.trim(),amount=Number(document.getElementById('financeRecordAmount').value||0),date=document.getElementById('financeRecordDate').value,notes=document.getElementById('financeRecordNotes').value.trim();
+      const ret=Number(document.getElementById('financeRecordReturn')?.value||0);
+      if(!name||amount<=0||!date||ret<0){alert('Enter a description, valid amount and date.');return;}
+      const payload={user_id:currentUser.id,record_type:financeCurrentType,name,amount,return_amount:financeCurrentType==='investment'?ret:0,date,notes};
+      const q=financeEditingId?supabaseClient.from('financial_records').update(payload).eq('id',financeEditingId).eq('user_id',currentUser.id):supabaseClient.from('financial_records').insert(payload);
+      const {error}=await q;if(error){alert(error.message);return;}financeEditingId=null;await syncFinancialRecords();renderFinanceSection();
+    }
+    function editFinancialRecord(id){
+      const x=financialRecords.find(r=>String(r.id)===String(id));if(!x)return;financeEditingId=id;renderFinanceSection();
+      document.getElementById('financeRecordName').value=x.name;document.getElementById('financeRecordAmount').value=x.amount;
+      if(document.getElementById('financeRecordReturn'))document.getElementById('financeRecordReturn').value=x.return_amount;
+      document.getElementById('financeRecordDate').value=x.date;document.getElementById('financeRecordNotes').value=x.notes||'';
+    }
+    function cancelFinancialRecordEdit(){financeEditingId=null;renderFinanceSection();}
+    async function deleteFinancialRecord(id){
+      if(!confirm('Delete this record?'))return;const {error}=await supabaseClient.from('financial_records').delete().eq('id',id).eq('user_id',currentUser.id);
+      if(error){alert(error.message);return;}await syncFinancialRecords();renderFinanceSection();
+    }
+
+
+    function openHistory() {
+
+      const screen = document.getElementById('screen-history');
+
+      if (!screen) {
+
+        alert('History screen could not be opened.');
+
+        return;
+
+      }
+
+      switchTab('screen-history', null);
+
+      const d = document.getElementById('historyDailyDate');
+
+      if (d && !d.value) d.value = todayISO();
+
+      Promise.all([syncHistoryEntries(),syncFinancialRecords()]).catch(err=>console.warn('History records unavailable:',err)).finally(renderHistory);
+
+    }
+
+    function setHistoryMode(mode) {
+
+      historyMode = mode;
+
+      ['daily','weekly','monthly','custom'].forEach(m => {
+
+        const tab = document.getElementById('historyTab' + m.charAt(0).toUpperCase() + m.slice(1));
+
+        if (tab) tab.classList.toggle('active', m === mode);
+
+      });
+
+      document.getElementById('historyDailyControls').style.display = mode === 'daily' ? 'flex' : 'none';
+
+      document.getElementById('historyWeeklyControls').style.display = mode === 'weekly' ? 'flex' : 'none';
+
+      document.getElementById('historyMonthlyControls').style.display = mode === 'monthly' ? 'flex' : 'none';
+
+      document.getElementById('historyCustomControls').style.display = mode === 'custom' ? 'flex' : 'none';
+
+      renderHistory();
+
+    }
+
+    function historyRange() {
+
+      const today = todayISO();
+
+      if (historyMode === 'daily') {
+
+        const d = document.getElementById('historyDailyDate')?.value || today;
+
+        return {from:d, to:d, label:d};
+
+      }
+
+      if (historyMode === 'weekly') {
+
+        const v = document.getElementById('historyWeekDate')?.value || today;
+
+        const date = new Date(v + 'T00:00:00');
+
+        const day = date.getDay();
+
+        const diff = day === 0 ? -6 : 1 - day;
+
+        date.setDate(date.getDate() + diff);
+
+        const from = date.toISOString().slice(0,10);
+
+        date.setDate(date.getDate() + 6);
+
+        const to = date.toISOString().slice(0,10);
+
+        return {from,to,label:`${from} → ${to}`};
+
+      }
+
+      if (historyMode === 'monthly') {
+
+        const m = document.getElementById('historyMonth')?.value || monthISO();
+
+        const first = m + '-01';
+
+        const lastDate = new Date(Number(m.slice(0,4)), Number(m.slice(5,7)), 0);
+
+        const last = `${m}-${String(lastDate.getDate()).padStart(2,'0')}`;
+
+        return {from:first,to:last,label:m};
+
+      }
+
+      const from = document.getElementById('historyFromDate')?.value || today;
+
+      const to = document.getElementById('historyToDate')?.value || today;
+
+      return {from: from <= to ? from : to, to: from <= to ? to : from, label:`${from} → ${to}`};
+
+    }
+
+    function historyFilteredData() {
+
+      const {from,to} = historyRange();
+
+      const inRange = d => d && d >= from && d <= to;
+
+      const sales = activeOrders.filter(s => inRange(s.date));
+
+      const exps = expenses.filter(e => inRange(e.date));
+
+      const investments=financialRecords.filter(e=>e.record_type==='investment'&&inRange(e.date));
+      const selfLove=financialRecords.filter(e=>e.record_type==='self_love'&&inRange(e.date));
+      return {sales,exps,investments,selfLove,from,to};
+
+    }
+
+    function historyPaymentSummary(sales) {
+
+      const totals = { Cash: 0, MPESA: 0, 'LIPA-MPESA': 0, CRDB: 0, SELCOM: 0 };
+
+      sales.forEach(s => {
+
+        const method = String(s.paymentMethod || '').trim().toLowerCase();
+
+        const amount = Number(s.total || 0);
+
+        if (method === 'cash' || method.includes('cash')) totals.Cash += amount;
+
+        else if (method.includes('lipa-mpesa')) totals['LIPA-MPESA'] += amount;
+        else if (method.includes('mpesa') || method.includes('m-pesa')) totals.MPESA += amount;
+
+        else if (method.includes('crdb')) totals.CRDB += amount;
+
+        else if (method.includes('selcom')) totals.SELCOM += amount;
+
+
+      });
+
+      return totals;
+
+    }
+
+    function historyDailyRows(data) {
+
+      const dates = {};
+
+      [ ...data.sales.map(x=>x.date), ...data.exps.map(x=>x.date),
+
+        ...data.investments.map(x=>x.date), ...data.selfLove.map(x=>x.date) ].forEach(d => { if(d) dates[d]=true; });
+
+      return Object.keys(dates).sort().map(date => {
+
+        const sales=data.sales.filter(x=>x.date===date);
+
+        const exps=data.exps.filter(x=>x.date===date);
+
+        const st=sales.reduce((a,x)=>a+Number(x.total||0),0);
+
+        const et=exps.reduce((a,x)=>a+Number(x.amount||0),0);
+
+        return {date,st,et,balance:st-et};
+
+      });
+
+    }
+
+    function renderHistory() {
+
+      const els = ['historyDailySummary','historySalesContent','historyExpensesContent','historyInvestmentsContent','historySelfLoveContent','historyTitheContent','historyOfferingContent','historyReconContent'];
+
+      if (!document.getElementById('screen-history')) return;
+
+      const data = historyFilteredData();
+
+      const {from,to} = data;
+
+      const label = historyRange().label;
+
+      const note = document.getElementById('historyPeriodLabel');
+
+      if (note) note.textContent = `Selected period: ${label}`;
+
+      const totalSales = data.sales.reduce((a,x)=>a+Number(x.total||0),0);
+
+      const totalExpenses=data.exps.reduce((a,x)=>a+Number(x.amount||0),0);
+      const investmentTotal=data.investments.reduce((a,x)=>a+Number(x.amount||0),0);
+      const investmentReturns=data.investments.reduce((a,x)=>a+Number(x.return_amount||0),0);
+      const selfLoveTotal=data.selfLove.reduce((a,x)=>a+Number(x.amount||0),0);
+      const tithe=totalSales*0.10, offering=totalSales*Number(offeringPercentage||0)/100;
+
+      const cashSales = data.sales.filter(s => String(s.paymentMethod||'').toLowerCase() === 'cash')
+
+        .reduce((a,x)=>a+Number(x.total||0),0);
+
+      const cashAvailable = cashSales;
+
+      const cashAfterExpenses = cashAvailable - totalExpenses;
+
+      const crdbSales = data.sales.filter(s => String(s.paymentMethod||'').toLowerCase().includes('crdb'))
+
+        .reduce((a,x)=>a+Number(x.total||0),0);
+
+      const crdbDeposit = cashAfterExpenses + crdbSales;
+
+      const otherPaymentMethodSales = data.sales.filter(s => {
+        const method = String(s.paymentMethod||'').toLowerCase();
+        return !method.includes('cash') && !method.includes('crdb');
+      }).reduce((a,x)=>a+Number(x.total||0),0);
+
+      const totalCrdbDepositPlusOtherPaymentSales = crdbDeposit + otherPaymentMethodSales;
+
+      // FINANCIAL RECONCILIATION — APPEARICH
+      // APPEARICH = TOTAL CRDB DEPOSIT + OTHER PAYMENT METHOD SALES - TITHE.
+      const appearich = totalCrdbDepositPlusOtherPaymentSales - tithe;
+
+      const summary = document.getElementById('historyDailySummary');
+
+      if (summary) {
+
+        if (historyMode === 'daily') summary.innerHTML = '';
+
+        else {
+
+          const rows=historyDailyRows(data);
+
+          summary.innerHTML = rows.length ? `<div class="history-summary-table-wrap"><table class="history-table">
+
+            <thead><tr><th>Date</th><th>Income</th><th>Expenses</th><th>Balance</th></tr></thead>
+
+            <tbody>${rows.map(r=>`<tr onclick="document.getElementById('historyDailyDate').value='${r.date}'; historyMode='daily'; setHistoryMode('daily')">
+
+              <td>${r.date}</td><td>${money(r.st)}</td><td>${money(r.et)}</td><td><strong>${money(r.balance)}</strong></td>
+
+            </tr>`).join('')}</tbody></table></div>` : '<div class="history-empty">No records in this period.</div>';
+
+        }
+
+      }
+
+      const salesEl=document.getElementById('historySalesContent');
+
+      const paymentSummary = historyPaymentSummary(data.sales);
+
+      const paymentDisplay = value => Number(value || 0) > 0 ? money(value) : '-';
+
+      if(salesEl) salesEl.innerHTML = `<table class="history-table">
+
+        <thead><tr><th>Total Income</th><th>Cash</th><th>MPESA</th><th>LIPA-MPESA</th><th>CRDB</th><th>SELCOM</th></tr></thead>
+
+        <tbody><tr>
+
+          <td>${money(totalSales)}</td>
+
+          <td>${paymentDisplay(paymentSummary.Cash)}</td>
+
+          <td>${paymentDisplay(paymentSummary.MPESA)}</td>
+
+
+          <td>${paymentDisplay(paymentSummary['LIPA-MPESA'])}</td>
+          <td>${paymentDisplay(paymentSummary.CRDB)}</td>
+          <td>${paymentDisplay(paymentSummary.SELCOM)}</td>
+
+
+        </tr></tbody></table>`;
+
+      const expEl=document.getElementById('historyExpensesContent');
+
+      if(expEl) expEl.innerHTML = data.exps.length ?
+
+        `<table class="history-table"><tbody>${data.exps.map(e=>`<tr><td>${escapeHtml(e.name || '')}</td><td>${money(e.amount)}</td></tr>`).join('')}
+
+        <tr class="history-total"><td>TOTAL EXPENSES</td><td>${money(totalExpenses)}</td></tr></tbody></table>` :
+
+        '<div class="history-empty">No expenses recorded for this period.</div>';
+
+      const invEl=document.getElementById('historyInvestmentsContent');
+      if(invEl)invEl.innerHTML=data.investments.length?`<table class="history-table"><tbody>${data.investments.map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${money(x.amount)}</td><td>Return ${money(x.return_amount)}</td></tr>`).join('')}<tr class="history-total-row"><td>Total invested</td><td>${money(investmentTotal)}</td><td>Returns ${money(investmentReturns)}</td></tr></tbody></table>`:'<div class="history-empty">No investments recorded.</div>';
+      const selfEl=document.getElementById('historySelfLoveContent');
+      if(selfEl)selfEl.innerHTML=data.selfLove.length?`<table class="history-table"><tbody>${data.selfLove.map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${money(x.amount)}</td></tr>`).join('')}<tr class="history-total-row"><td>Total self love</td><td>${money(selfLoveTotal)}</td></tr></tbody></table>`:'<div class="history-empty">No personal spending recorded.</div>';
+      const titheEl=document.getElementById('historyTitheContent');
+      if(titheEl)titheEl.innerHTML=`<table class="history-table"><tbody><tr><td>Eligible income</td><td>${money(totalSales)}</td></tr><tr class="history-total-row"><td>Fixed tithe (10%)</td><td>${money(tithe)}</td></tr></tbody></table>`;
+      const offeringEl=document.getElementById('historyOfferingContent');
+      if(offeringEl)offeringEl.innerHTML=`<table class="history-table"><tbody><tr><td>Eligible income</td><td>${money(totalSales)}</td></tr><tr><td>Offering percentage</td><td>${offeringPercentage}%</td></tr><tr class="history-total-row"><td>Offering amount</td><td>${money(offering)}</td></tr></tbody></table>`;
+
+      const recon=document.getElementById('historyReconContent');
+
+      if(recon) recon.innerHTML=`<table class="history-table recon-table"><tbody>
+
+        <tr><td>Total Income</td><td>${money(totalSales)}</td></tr>
+
+        <tr><td>Total Expenses</td><td>${money(totalExpenses)}</td></tr>
+
+        <tr class="history-highlight"><td>BALANCE</td><td>${money(totalSales-totalExpenses)}</td></tr>
+
+        <tr><td>Cash Sales</td><td>${money(cashSales)}</td></tr>
+
+        <tr class="history-highlight"><td>Total Cash Available</td><td>${money(cashAvailable)}</td></tr>
+
+        <tr><td>Less: Expenses</td><td>${money(totalExpenses)}</td></tr>
+
+        <tr class="history-highlight"><td>Cash After Expenses</td><td>${money(cashAfterExpenses)}</td></tr>
+
+        <tr><td>CRDB Sales</td><td>${money(crdbSales)}</td></tr>
+
+        <tr class="history-highlight"><td>TOTAL CRDB DEPOSIT</td><td>${money(crdbDeposit)}</td></tr>
+
+        <tr><td>Other Payment Method Sales (Excluding Cash & CRDB)</td><td>${money(otherPaymentMethodSales)}</td></tr>
+
+        <tr class="history-highlight"><td>TOTAL CRDB DEPOSIT + OTHER PAYMENT METHOD SALES</td><td>${money(totalCrdbDepositPlusOtherPaymentSales)}</td></tr>
+
+        <!-- FINANCIAL RECONCILIATION: TITHE -->
+        <tr class="history-highlight"><td>TITHE</td><td>${money(tithe)}</td></tr>
+
+        <!-- FINANCIAL RECONCILIATION: FINAL APPEARICH LINE -->
+        <tr class="history-highlight"><td>APPEARICH</td><td>${money(appearich)}</td></tr>
+
+      </tbody></table>`;
+
+    }
+
+    function toggleHistorySection(id) {
+
+      const el=document.getElementById(id);
+
+      if(el) el.classList.toggle('open');
+
+    }
+
+    async function syncHistoryEntries() {
+
+      if (!currentUser) return;
+
+      const [capRes,debitRes] = await Promise.all([
+
+        supabaseClient.from('capital_injections').select('*').eq('user_id',currentUser.id).order('date',{ascending:false}),
+
+        supabaseClient.from('debit_collections').select('*').eq('user_id',currentUser.id).order('date',{ascending:false})
+
+      ]);
+
+      if(capRes.error) throw capRes.error;
+
+      if(debitRes.error) throw debitRes.error;
+
+      capitalInjections=(capRes.data||[]).map(x=>({id:x.id,name:x.name,amount:Number(x.amount||0),date:x.date}));
+
+      debitCollections=(debitRes.data||[]).map(x=>({id:x.id,name:x.name,amount:Number(x.amount||0),date:x.date}));
+
+    }
+
+    function openHistoryEntryModal(type) {
+
+      historyEditingType=type; historyEditingId=null;
+
+      document.getElementById('historyEntryTitle').textContent=type==='capital'?'Add Capital Injection':'Add Debit Collection';
+
+      document.getElementById('historyEntryNameLabel').textContent=type==='capital'?'Name':'Customer / Description';
+
+      document.getElementById('historyEntryName').value='';
+
+      document.getElementById('historyEntryAmount').value='';
+
+      document.getElementById('historyEntryDate').value=document.getElementById('historyDailyDate')?.value || todayISO();
+
+      document.getElementById('historyEntryCancelEdit').style.display='none';
+
+      document.getElementById('historyEntryModal').classList.add('active');
+
+    }
+
+    function editHistoryEntry(type,id) {
+
+      const arr=type==='capital'?capitalInjections:debitCollections;
+
+      const e=arr.find(x=>String(x.id)===String(id));
+
+      if(!e)return;
+
+      historyEditingType=type; historyEditingId=id;
+
+      document.getElementById('historyEntryTitle').textContent=type==='capital'?'Edit Capital Injection':'Edit Debit Collection';
+
+      document.getElementById('historyEntryNameLabel').textContent=type==='capital'?'Name':'Customer / Description';
+
+      document.getElementById('historyEntryName').value=e.name||'';
+
+      document.getElementById('historyEntryAmount').value=e.amount||0;
+
+      document.getElementById('historyEntryDate').value=e.date||todayISO();
+
+      document.getElementById('historyEntryCancelEdit').style.display='block';
+
+      document.getElementById('historyEntryModal').classList.add('active');
+
+    }
+
+    async function saveHistoryEntry() {
+
+      if(!currentUser){alert('Please sign in first.');return;}
+
+      const name=document.getElementById('historyEntryName').value.trim();
+
+      const amount=Number(document.getElementById('historyEntryAmount').value||0);
+
+      const date=document.getElementById('historyEntryDate').value;
+
+      if(!name || amount<=0 || !date){alert('Please enter a name/description, valid amount and date.');return;}
+
+      const table=historyEditingType==='capital'?'capital_injections':'debit_collections';
+
+      const payload={user_id:currentUser.id,name,amount,date};
+
+      try {
+
+        let res;
+
+        if(historyEditingId) res=await supabaseClient.from(table).update({name,amount,date}).eq('id',historyEditingId).eq('user_id',currentUser.id);
+
+        else res=await supabaseClient.from(table).insert(payload);
+
+        if(res.error) throw res.error;
+
+        await syncHistoryEntries();
+
+        closeSheet('historyEntryModal');
+
+        renderHistory();
+        if(document.getElementById('screen-finance')?.classList.contains('active') && financeCurrentType==='capital') renderFinanceSection();
+
+      } catch(e){ console.error(e); alert('Could not save entry: '+e.message); }
+
+    }
+
+    async function deleteHistoryEntry(type,id) {
+
+      if(!confirm('Delete this entry?')) return;
+
+      const table=type==='capital'?'capital_injections':'debit_collections';
+
+      try {
+
+        const {error}=await supabaseClient.from(table).delete().eq('id',id).eq('user_id',currentUser.id);
+
+        if(error)throw error;
+
+        await syncHistoryEntries(); renderHistory(); if(document.getElementById('screen-finance')?.classList.contains('active') && financeCurrentType==='capital') renderFinanceSection();
+
+      } catch(e){console.error(e);alert('Could not delete entry: '+e.message);}
+
+    }
+
+    function cancelHistoryEntryEdit() {
+
+      historyEditingType=null; historyEditingId=null;
+
+      closeSheet('historyEntryModal');
+
+    }
+
+    async function generateHistoryPDF() {
+
+      if(!window.jspdf || !window.jspdf.jsPDF){alert('PDF library is not available.');return;}
+
+      const {sales,exps,investments,selfLove}=historyFilteredData();
+
+      const r=historyRange();
+
+      const totalSales=sales.reduce((a,x)=>a+Number(x.total||0),0);
+
+      const totalExpenses=exps.reduce((a,x)=>a+Number(x.amount||0),0);
+
+      const cashSales=sales.filter(s=>String(s.paymentMethod||'').toLowerCase()==='cash').reduce((a,x)=>a+Number(x.total||0),0);
+
+      
+
+      
+
+      const cashAvailable=cashSales;
+
+      const cashAfter=cashAvailable-totalExpenses;
+
+      const crdb=sales.filter(s=>String(s.paymentMethod||'').toLowerCase().includes('crdb')).reduce((a,x)=>a+Number(x.total||0),0);
+
+      const crdbDeposit=cashAfter+crdb;
+
+      const otherPaymentMethodSales=sales.filter(s=>{
+        const method=String(s.paymentMethod||'').toLowerCase();
+        return !method.includes('cash') && !method.includes('crdb');
+      }).reduce((a,x)=>a+Number(x.total||0),0);
+
+      const totalCrdbDepositPlusOtherPaymentSales=crdbDeposit+otherPaymentMethodSales;
+
+      // FINANCIAL RECONCILIATION — TITHE (PDF)
+      // CHANGE TITHE PERCENTAGE HERE: 10% of eligible recorded income only.
+      const TITHE_PERCENTAGE = 0.10;
+      const tithe = TITHE_PERCENTAGE * totalSales;
+
+      // FINANCIAL RECONCILIATION — APPEARICH (PDF)
+      // APPEARICH = TOTAL CRDB DEPOSIT + OTHER PAYMENT METHOD SALES - TITHE.
+      const appearich = totalCrdbDepositPlusOtherPaymentSales - tithe;
+
+      const doc=new window.jspdf.jsPDF();
+
+      doc.setFontSize(18); doc.text('APPEARICH',14,18);
+
+      doc.setFontSize(12); doc.text('INCOME & EXPENSES RECONCILIATION REPORT',14,27);
+
+      doc.setFontSize(9); doc.text(`Report Period: ${r.label}`,14,35);
+
+      let y=42;
+
+      const addTable=(title,head,body)=>{doc.setFontSize(11);doc.text(title,14,y);y+=4;doc.autoTable({startY:y,head:[head],body,theme:'grid',styles:{fontSize:8},headStyles:{fontStyle:'bold'}});y=doc.lastAutoTable.finalY+10;};
+
+      const paymentSummary=historyPaymentSummary(sales);
+
+      const paymentDisplay=value=>Number(value||0)>0?money(value):'-';
+
+      addTable('INCOME',['Total Income','Cash','MPESA','LIPA-MPESA','CRDB','SELCOM'],[[
+
+        money(totalSales),
+
+        paymentDisplay(paymentSummary.Cash),
+
+        paymentDisplay(paymentSummary.MPESA),
+
+        paymentDisplay(paymentSummary['LIPA-MPESA']),
+        paymentDisplay(paymentSummary.CRDB),
+
+
+        paymentDisplay(paymentSummary.SELCOM)
+      ]]);
+
+      addTable('EXPENSES',['Description','Amount'],exps.map(x=>[x.name,money(x.amount)]).concat([['TOTAL EXPENSES',money(totalExpenses)]]));
+
+      addTable('FINANCIAL RECONCILIATION',['Calculation','Amount'],[
+
+        ['Total Sales',money(totalSales)],['Total Expenses',money(totalExpenses)],['BALANCE',money(totalSales-totalExpenses)],
+
+        ['Cash Sales',money(cashSales)],
+
+        ['Total Cash Available',money(cashAvailable)],['Less Expenses',money(totalExpenses)],['Cash After Expenses',money(cashAfter)],
+
+        ['CRDB Sales',money(crdb)],['TOTAL CRDB DEPOSIT',money(crdbDeposit)],
+
+        ['Other Payment Method Sales (Excluding Cash & CRDB)',money(otherPaymentMethodSales)],
+
+        ['TOTAL CRDB DEPOSIT + OTHER PAYMENT METHOD SALES',money(totalCrdbDepositPlusOtherPaymentSales)],
+        // FINANCIAL RECONCILIATION: TITHE
+        ['TITHE',money(tithe)],
+        // FINANCIAL RECONCILIATION: FINAL APPEARICH LINE
+        ['APPEARICH',money(appearich)]
+
+      ]);
+
+      doc.save(`Appearich_Reconciliation_${r.from}_${r.to}.pdf`);
+
+    }
+
+    async function setupHistoryRealtime() {
+
+      if(!currentUser)return;
+
+      if(historyRealtimeChannel){
+
+        await supabaseClient.removeChannel(historyRealtimeChannel);
+
+        historyRealtimeChannel=null;
+
+      }
+
+      historyRealtimeChannel=supabaseClient.channel(`glamo-history-${currentUser.id}`)
+
+        .on('postgres_changes',{event:'*',schema:'public',table:'capital_injections',filter:`user_id=eq.${currentUser.id}`},()=>{syncHistoryEntries().then(renderHistory).catch(console.error)})
+
+        .on('postgres_changes',{event:'*',schema:'public',table:'debit_collections',filter:`user_id=eq.${currentUser.id}`},()=>{syncHistoryEntries().then(renderHistory).catch(console.error)})
+
+        .subscribe();
+
+    }
+
+    function switchTab(screenId, element) {
+
+      document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
+
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+      const targetScreen = document.getElementById(screenId);
+
+      if (screenId === 'screen-perfumes' && !editingSaleId) resetNewSalePaymentMethod();
+
+      if (targetScreen) targetScreen.classList.add('active');
+
+      if (element) element.classList.add('active');
+
+      if (screenId === 'screen-sales-progress') renderSalesProgress();
+
+      if (screenId === 'screen-bookings') renderBookings();
+
+      if (screenId === 'screen-old-sales') renderOldSales();
+      if (screenId === 'screen-history') renderHistory();
+
+      if (screenId === 'screen-stocks') renderStocksArea();
+
+    }
+
+    function goBack() {
+
+      switchTab('screen-home', document.getElementById('nav-home-btn'));
+
+    }
+
+    function resetNewSalePaymentMethod() {
+
+      selectedSalePayment = '';
+
+      selectedMobileProvider = '';
+
+      const cashBtn = document.getElementById('saleCashBtn');
+
+      const mobileBtn = document.getElementById('saleMobileBtn');
+
+      const mobileBox = document.getElementById('saleMobileBox');
+
+      if (cashBtn) cashBtn.classList.remove('active');
+
+      if (mobileBtn) mobileBtn.classList.remove('active');
+
+      if (mobileBox) mobileBox.classList.remove('active');
+
+      document.querySelectorAll('#salePaymentOptions .pay-option-btn').forEach(x => x.classList.remove('active'));
+
+    }
+
+    function selectSalePayment(type) {
+
+      selectedSalePayment = type;
+
+      document.querySelectorAll('#salePaymentOptions .pay-option-btn').forEach(x => x.classList.remove('active'));
+      const btnMap = { Cash:'saleCashBtn', MPESA:'saleMpesaBtn', 'LIPA-MPESA':'saleLIPA-MPESABtn', CRDB:'saleCrdbBtn', SELCOM:'saleSelcomBtn' };
+      const btn = document.getElementById(btnMap[type]);
+      if (btn) btn.classList.add('active');
+
+
+
+    }
+
+    function selectMobileProvider(el, provider) {
+
+      document.querySelectorAll('#salePaymentOptions .pay-option-btn').forEach(x => x.classList.remove('active'));
+
+      el.classList.add('active');
+
+      selectedMobileProvider = provider;
+
+    }
+
+    async function saveSale() {
+
+      const customerName = document.getElementById('saleCustomerName')?.value.trim() || '';
+      const perfumeName = document.getElementById('salePerfumeName').value.trim();
+
+        const mls = document.getElementById('saleMls').value;
+
+const quantity = Number(document.getElementById('saleQuantity').value || 0);
+
+      const price = Number(document.getElementById('salePrice').value || 0);
+
+      const saleDateVal = document.getElementById('saleDate').value;
+
+      
+
+      if (!perfumeName) {
+
+        alert('Please enter a perfume name.');
+
+        return;
+
+      }
+
+      if (quantity <= 0 || price < 0) {
+
+        alert('Please enter a valid quantity and price.');
+
+        return;
+
+      }
+
+      if (!selectedSalePayment) {
+
+        alert('Please select a payment method for this sale.');
+
+        return;
+
+      }
+
+      const finalPaymentMethod = selectedSalePayment;
+
+
+
+
+      const totalCalculated = quantity * price;
+
+      const recordData = {
+
+        user_id: currentUser.id,
+
+        customer_name: customerName,
+        perfume_name: perfumeName,
+
+        
+
+      mls: mls,
+
+quantity: quantity,
+
+        price: price,
+
+        total: totalCalculated,
+
+        payment_method: finalPaymentMethod,
+
+        sale_date: saleDateVal,
+
+        updated_at: new Date().toISOString()
+
+      };
+
+      try {
+
+        if (editingSaleId) {
+
+          const { error } = await supabaseClient
+
+            .from('sales')
+
+            .update(recordData)
+
+            .eq('id', editingSaleId)
+
+            .eq('user_id', currentUser.id);
+
+          if (error) throw error;
+
+          alert('Sale updated successfully!');
+
+        } else {
+
+          const { error } = await supabaseClient
+
+            .from('sales')
+
+            .insert([recordData]);
+
+          if (error) throw error;
+
+          alert('Sale added successfully!');
+
+        }
+
+        
+
+        cancelSaleEdit();
+
+        await syncSalesFromSupabase();
+
+      } catch(err) {
+
+        alert('Error saving sale: ' + err.message);
+
+      }
+
+    }
+
+    function editSale(id) {
+
+      const sale = activeOrders.find(s => s.id === id);
+
+      if (!sale) return;
+
+      editingSaleId = id;
+
+      
+
+      document.getElementById('saleFormTitle').textContent = 'Edit Sale';
+
+      document.getElementById('saleSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Update Sale';
+
+      document.getElementById('saleCancelBtn').style.display = 'block';
+
+      
+
+      document.getElementById('saleCustomerName').value = sale.customerName || '';
+      document.getElementById('salePerfumeName').value = sale.perfumeName;
+
+      
+
+  document.getElementById('saleMls').value = sale.mls || '';document.getElementById('saleQuantity').value = sale.quantity;
+
+      document.getElementById('salePrice').value = sale.price;
+
+      document.getElementById('saleDate').value = sale.date;
+
+      calculateCurrentTotal();
+
+      const normalizedPayment = String(sale.paymentMethod || '').trim().toLowerCase();
+      if (normalizedPayment.includes('crdb')) selectSalePayment('CRDB');
+      else if (normalizedPayment.includes('mpesa') || normalizedPayment.includes('m-pesa')) selectSalePayment('MPESA');
+      else if (normalizedPayment.includes('lipa-mpesa')) selectSalePayment('LIPA-MPESA');
+      else if (normalizedPayment.includes('selcom')) selectSalePayment('SELCOM');
+
+      else if (normalizedPayment === 'cash' || normalizedPayment.includes('cash')) selectSalePayment('Cash');
+      else resetNewSalePaymentMethod();
+
+
+
+
+
+
+
+
+
+
+      switchTab('screen-perfumes');
+
+    }
+
+    function cancelSaleEdit() {
+
+      editingSaleId = null;
+
+      document.getElementById('saleFormTitle').textContent = 'Record Individual Sale';
+
+      document.getElementById('saleSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Add Sale';
+
+      document.getElementById('saleCancelBtn').style.display = 'none';
+
+      document.getElementById('saleCustomerName').value = '';
+      document.getElementById('salePerfumeName').value = '';
+
+      
+
+  document.getElementById('saleMls').value = '10 ml';document.getElementById('saleQuantity').value = '1';
+
+      document.getElementById('salePrice').value = '';
+
+      document.getElementById('saleTotalCalculated').value = '';
+
+      document.getElementById('saleDate').value = todayISO();
+
+      selectedSalePayment = '';
+
+      selectedMobileProvider = '';
+
+      resetNewSalePaymentMethod();
+
+    }
+
+    async function deleteSale(id) {
+
+      if (!confirm('Are you sure you want to delete this sale record?')) return;
+
+      try {
+
+        const { error } = await supabaseClient.from('sales').delete().eq('id', id).eq('user_id', currentUser.id);
+
+        if (error) throw error;
+
+        await syncSalesFromSupabase();
+
+      } catch(e) {
+
+        alert('Failed to delete sale: ' + e.message);
+
+      }
+
+    }
+
+    function renderRecordedSales() {
+
+      const container = document.getElementById('recordedSalesProgressList');
+
+      if (!container) return;
+
+      if (!activeOrders.length) {
+
+        container.innerHTML = '<div style="font-size:0.8rem; color:var(--text-sub);">No sales recorded yet.</div>';
+
+        return;
+
+      }
+
+      container.innerHTML = activeOrders.map((sale, index) => `
+
+        <div class="sale-card-item">
+
+          <div style="display:flex; justify-content:space-between; font-weight:800; font-size:0.9rem;">
+
+            <span>Sale #${activeOrders.length - index} — ${escapeHtml(sale.perfumeName)}</span>
+
+            <span style="color:var(--accent-gold);">${money(sale.total)}</span>
+
+          </div>
+
+          <div style="font-size:0.78rem; color:var(--text-sub); margin-top:4px;">
+
+            MLS: ${escapeHtml(sale.mls || '—')} | Quantity: ${sale.quantity} | Price: ${money(sale.price)}
+
+          </div>
+
+          <div style="font-size:0.78rem; color:var(--text-sub); margin-top:2px;">
+
+          <div style="font-size:0.78rem; color:var(--text-sub); margin-top:2px;">Customer: <strong>${escapeHtml(sale.customerName || '—')}</strong></div>
+            Payment: <strong>${escapeHtml(sale.paymentMethod)}</strong> | Date: ${sale.date}
+
+          </div>
+
+          <div class="sale-actions">
+
+            <button class="small-action" onclick="editSale('${sale.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+
+            <button class="small-action delete" onclick="deleteSale('${sale.id}')"><i class="fa-solid fa-trash"></i> Delete</button>
+
+          </div>
+
+        </div>
+
+      `).join('');
+
+    }
+
+    function renderBookings() {
+
+      const container = document.getElementById('bookingsListContainer');
+
+      if (!container) return;
+
+      if (!activeOrders.length) {
+
+        container.innerHTML = '<div style="text-align:center; font-size:0.85rem; color:var(--text-sub); padding:20px;">No sales history found.</div>';
+
+        return;
+
+      }
+
+      container.innerHTML = activeOrders.map(sale => `
+
+        <div class="sales-entry-card">
+
+          <div style="display:flex; justify-content:space-between; font-weight:900;">
+
+            <span>${escapeHtml(sale.perfumeName)}</span>
+
+            <span style="color:var(--accent-gold);">${money(sale.total)}</span>
+
+          </div>
+
+          <div style="font-size:0.8rem; color:var(--text-sub); margin-top:6px;">
+
+            MLS: ${escapeHtml(sale.mls || '—')} | Qty: ${sale.quantity} × ${money(sale.price)}
+
+          </div>
+
+          <div style="font-size:0.8rem; color:var(--text-sub); margin-top:2px;">
+
+            Payment Method: <strong>${escapeHtml(sale.paymentMethod)}</strong>
+
+          </div>
+
+          <div style="font-size:0.75rem; color:var(--text-sub); margin-top:2px;">
+
+          <div style="font-size:0.75rem; color:var(--text-sub); margin-top:2px;">Customer: <strong>${escapeHtml(sale.customerName || '—')}</strong></div>
+            Date: ${sale.date}
+
+          </div>
+
+          <div class="sale-actions">
+
+            <button class="small-action" onclick="editSale('${sale.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+
+            <button class="small-action delete" onclick="deleteSale('${sale.id}')"><i class="fa-solid fa-trash"></i> Delete</button>
+
+          </div>
+
+        </div>
+
+      `).join('');
+
+    }
+
+    function getSalesForReview() {
+
+  if (reviewMode === 'daily') {
+
+    const selectedDate = document.getElementById('dailyDate')?.value || todayISO();
+
+    return activeOrders.filter(s => (s.date || '') === selectedDate);
+
+  }
+
+  if (reviewMode === 'monthly') {
+
+    const selectedMonth = document.getElementById('reviewMonth')?.value || monthISO();
+
+    return activeOrders.filter(s => (s.date || '').startsWith(selectedMonth));
+
+  }
+
+  const from = document.getElementById('rangeFrom')?.value;
+
+  const to = document.getElementById('rangeTo')?.value;
+
+  if (from && to) {
+
+    return activeOrders.filter(s => {
+
+      const d = s.date || '';
+
+      return d >= from && d <= to;
+
+    });
+
+  }
+
+  // Weekly: previous 7 calendar days including today.
+
+  const end = new Date();
+
+  const start = new Date(end);
+
+  start.setDate(end.getDate() - 6);
+
+  const startISO = start.toISOString().slice(0, 10);
+
+  const endISO = end.toISOString().slice(0, 10);
+
+  return activeOrders.filter(s => {
+
+    const d = s.date || '';
+
+    return d >= startISO && d <= endISO;
+
+  });
+
+}
+
+function renderSalesProgress() {
+
+  const metrics = document.getElementById('progressMetrics');
+
+  if (!metrics) return;
+
+  const reviewSales = getSalesForReview();
+
+  const totalRev = reviewSales.reduce(
+
+    (sum, s) => sum + Number(s.total || 0), 0
+
+  );
+
+  const totalQty = reviewSales.reduce(
+
+    (sum, s) => sum + Number(s.quantity || 0), 0
+
+  );
+
+  // Always calculate the exact selected day separately.
+
+  // If there were no sales that day, both values remain 0.
+
+  const selectedDate =
+
+    document.getElementById('dailyDate')?.value || todayISO();
+
+  const selectedDaySales = activeOrders.filter(
+
+    s => (s.date || '') === selectedDate
+
+  );
+
+  const selectedDayAmount = selectedDaySales.reduce(
+
+    (sum, s) => sum + Number(s.total || 0), 0
+
+  );
+
+  const selectedDayQty = selectedDaySales.reduce(
+
+    (sum, s) => sum + Number(s.quantity || 0), 0
+
+  );
+
+  metrics.innerHTML = `
+
+    <div class="review-card" style="margin-bottom:0; text-align:center;">
+
+      <div style="font-size:0.75rem; color:var(--text-sub);">
+
+        Total Sales Revenue
+
+      </div>
+
+      <div style="font-size:1.1rem; font-weight:900; color:var(--accent-gold); margin-top:4px;">
+
+        ${money(totalRev)}
+
+      </div>
+
+    </div>
+
+    <div class="review-card" style="margin-bottom:0; text-align:center;">
+
+      <div style="font-size:0.75rem; color:var(--text-sub);">
+
+        Total Items Sold
+
+      </div>
+
+      <div style="font-size:1.1rem; font-weight:900; margin-top:4px;">
+
+        ${totalQty} PCS
+
+      </div>
+
+    </div>
+
+    <div class="review-card" style="grid-column:1/-1; margin-bottom:0; text-align:center;">
+
+      <div style="font-size:0.75rem; color:var(--text-sub);">
+
+        Amount for ${escapeHtml(selectedDate)}
+
+      </div>
+
+      <div style="font-size:1.1rem; font-weight:900; color:var(--accent-gold); margin-top:4px;">
+
+        ${money(selectedDayAmount)}
+
+      </div>
+
+      <div style="font-size:0.75rem; color:var(--text-sub); margin-top:4px;">
+
+        ${selectedDayQty} PCS sold
+
+      </div>
+
+    </div>
+
+  `;
+
+  renderBestSellers(reviewSales);
+
+}
+
+function renderBestSellers(salesForReview = getSalesForReview()) {
+
+  const container = document.getElementById('bestSellersList');
+
+  if (!container) return;
+
+  const tally = {};
+
+  salesForReview.forEach(sale => {
+
+    const name = sale.perfumeName;
+
+    tally[name] = (tally[name] || 0) + Number(sale.quantity || 0);
+
+  });
+
+  const sorted = Object.entries(tally)
+
+    .sort((a, b) => b[1] - a[1]);
+
+  if (!sorted.length) {
+
+    container.innerHTML =
+
+      '<div style="font-size:0.8rem; color:var(--text-sub);">0 PCS sold — No sales recorded for the selected period.</div>';
+
+    return;
+
+  }
+
+  container.innerHTML = sorted.map(([name, qty], index) => `
+
+    <div class="bestseller-item">
+
+      <span>${index + 1}. ${escapeHtml(name)}</span>
+
+      <span style="color:var(--accent-gold);">${qty} sold</span>
+
+    </div>
+
+  `).join('');
+
+}
+
+function updateLoyaltyUI() {
+
+      const badge = document.getElementById('loyaltyCountBadge');
+
+      if (badge) badge.textContent = `Total Orders: ${activeOrders.length}`;
+
+      const dots = document.querySelectorAll('.stamp-dot');
+
+      dots.forEach((dot, idx) => {
+
+        if (idx < (activeOrders.length % 5)) {
+
+          dot.classList.add('filled');
+
+        } else {
+
+          dot.classList.remove('filled');
+
+        }
+
+      });
+
+    }
+
+    /* EXPENSES LOGIC */
+
+  let editingExpenseId = null;
+
+  let activeExpenseCategory = null;
+
+  const EXPENSE_CATEGORIES = [
+
+    'Stock Purchase',
+
+    'Packaging & Supplies',
+
+    'Transport & Delivery',
+
+    'Staff Expenses',
+
+    'Utilities & Rent',
+
+    'Business Operations',
+
+    'Owner Drawings',
+
+    'Loans & Debts',
+
+    'Cash Transfer'
+
+  ];
+
+  // Legacy values are only interpreted for display so historical records remain usable.
+
+  // New and edited records always use one of the nine exact categories above.
+
+  const LEGACY_EXPENSE_CATEGORY_MAP = {
+
+    'General': 'Business Operations',
+
+    'Stock': 'Stock Purchase',
+
+    'Packaging': 'Packaging & Supplies',
+
+    'Delivery': 'Transport & Delivery',
+
+    'Transport': 'Transport & Delivery',
+
+    'Marketing': 'Business Operations',
+
+    'Utilities': 'Utilities & Rent',
+
+    'Other': 'Business Operations'
+
+  };
+
+  function expenseCategoryForRecord(expense) {
+
+    const raw = String(expense?.category || '').trim();
+
+    return EXPENSE_CATEGORIES.includes(raw)
+
+      ? raw
+
+      : (LEGACY_EXPENSE_CATEGORY_MAP[raw] || 'Business Operations');
+
+  }
+
+  function expensesForCategory(category) {
+
+    return expenses.filter(e => expenseCategoryForRecord(e) === category);
+
+  }
+
+  function resetExpenseEntryFields() {
+
+    const name = document.getElementById('expenseName');
+
+    const date = document.getElementById('expenseDate');
+
+    const amount = document.getElementById('expenseAmount');
+
+    const notes = document.getElementById('expenseNotes');
+
+    if (name) name.value = '';
+
+    if (date) date.value = todayISO();
+
+    if (amount) amount.value = '';
+
+    if (notes) notes.value = '';
+
+  }
+
+  function expenseEntryMarkup(category) {
+
+    const isEditing = Boolean(editingExpenseId);
+
+    const e = isEditing ? expenses.find(x => x.id === editingExpenseId) : null;
+
+    const name = e ? escapeHtml(e.name || '') : '';
+
+    const date = e ? escapeHtml(e.date || todayISO()) : todayISO();
+
+    const amount = e ? Number(e.amount || 0) : '';
+
+    const notes = e ? escapeHtml(e.notes || '') : '';
+
+    const title = isEditing ? 'Edit Expense' : 'Add Expense';
+
+    const button = isEditing
+
+      ? '<i class="fa-solid fa-floppy-disk"></i> Update Expense'
+
+      : '<i class="fa-solid fa-plus"></i> Add Expense';
+
+    return `
+
+      <div class="expense-entry-compact">
+
+        <div class="form-group">
+
+          <label for="expenseName">What was purchased / Description</label>
+
+          <input id="expenseName" type="text" value="${name}" placeholder="e.g. Fragrance Oil">
+
+        </div>
+
+        <div class="form-row">
+
+          <div class="form-group">
+
+            <label for="expenseAmount">Amount (TZS)</label>
+
+            <input id="expenseAmount" class="number-control" type="number" min="0" step="100" value="${amount}" placeholder="0">
+
+          </div>
+
+          <div class="form-group">
+
+            <label for="expenseDate">Date</label>
+
+            <input id="expenseDate" class="date-control" type="date" value="${date}">
+
+          </div>
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="expenseNotes">Description / Notes (optional)</label>
+
+          <textarea id="expenseNotes" rows="2" placeholder="Optional notes">${notes}</textarea>
+
+        </div>
+
+        <button id="expenseSaveBtn" class="sales-save-btn" onclick="saveExpense()">${button}</button>
+
+        ${isEditing
+
+          ? '<button id="expenseCancelBtn" class="reorder-btn expense-add-another" onclick="cancelExpenseEdit()">Cancel Edit</button>'
+
+          : '<button type="button" class="reorder-btn expense-add-another" onclick="focusExpenseEntry()">+ Add Another</button>'}
+
+        <div id="expenseFeedback" class="expense-feedback"></div>
+
+      </div>
+
+    `;
+
+  }
+
+  function renderExpenseCategoryCards() {
+
+    const container = document.getElementById('expenseCategoryList');
+
+    if (!container) return;
+
+    container.innerHTML = EXPENSE_CATEGORIES.map(category => {
+
+      const records = expensesForCategory(category);
+
+      const total = records.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+      const isOpen = activeExpenseCategory === category;
+
+      const recordMarkup = records.length
+
+        ? `<div class="expense-category-records">
+
+            ${records.slice(0, 8).map(e => `
+
+              <div class="expense-category-record">
+
+                <div class="expense-category-record-head">
+
+                  <div class="expense-category-record-name">${escapeHtml(e.name)}</div>
+
+                  <div class="expense-category-record-amount">${money(e.amount)}</div>
+
+                </div>
+
+                <div class="expense-category-record-meta">${escapeHtml(e.date || '')}</div>
+
+                ${e.notes ? `<div class="expense-notes">${escapeHtml(e.notes)}</div>` : ''}
+
+                <div class="expense-category-record-actions">
+
+                  <button class="expense-action" onclick="editExpense('${e.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+
+                  <button class="expense-action delete" onclick="deleteExpense('${e.id}')"><i class="fa-solid fa-trash"></i> Delete</button>
+
+                </div>
+
+              </div>
+
+            `).join('')}
+
+            ${records.length > 8 ? `<div class="expense-meta" style="padding-top:7px;">Showing the 8 most recent records. See EXPENSE RECORDS below for all records.</div>` : ''}
+
+          </div>`
+
+        : '<div class="expense-category-records"><div class="expense-records-empty">No expenses yet</div></div>';
+
+      return `
+
+        <div class="expense-category-card ${isOpen ? 'open' : ''}" id="expenseCategoryCard-${escapeHtml(category.replace(/[^a-zA-Z0-9]/g, '-'))}">
+
+          <button type="button" class="expense-category-header" onclick="toggleExpenseCategory('${escapeHtml(category)}')">
+
+            <span class="expense-category-main">
+
+              <span class="expense-category-title">${escapeHtml(category)}</span>
+
+              <span class="expense-category-summary">${records.length} item${records.length === 1 ? '' : 's'} • ${money(total)}</span>
+
+            </span>
+
+            <i class="fa-solid fa-chevron-down expense-category-chevron"></i>
+
+          </button>
+
+          ${isOpen ? `<div class="expense-category-content">
+
+            ${expenseEntryMarkup(category)}
+
+            ${recordMarkup}
+
+          </div>` : ''}
+
+        </div>
+
+      `;
+
+    }).join('');
+
+  }
+
+  function renderExpensesGlobalRecords() {
+
+    const list = document.getElementById('expensesList');
+
+    if (!list) return;
+
+    const sorted = [...expenses].sort((a,b) => {
+
+      const dateCompare = String(b.date || '').localeCompare(String(a.date || ''));
+
+      if (dateCompare !== 0) return dateCompare;
+
+      return String(b.id || '').localeCompare(String(a.id || ''));
+
+    });
+
+    if (!sorted.length) {
+
+      list.innerHTML = '<div class="expense-records-empty">No expenses yet</div>';
+
+      return;
+
+    }
+
+    list.innerHTML = sorted.map(e => `
+
+      <div class="expense-item">
+
+        <div class="expense-item-head">
+
+          <div>
+
+            <div class="expense-record-category">${escapeHtml(expenseCategoryForRecord(e))}</div>
+
+            <div class="expense-record-date">${escapeHtml(e.date || '')}</div>
+
+            <div class="expense-record-desc">${escapeHtml(e.name || '')}</div>
+
+          </div>
+
+          <div class="expense-amount">${money(e.amount)}</div>
+
+        </div>
+
+        ${e.notes ? `<div class="expense-notes">${escapeHtml(e.notes)}</div>` : ''}
+
+        <div class="expense-actions">
+
+          <button class="expense-action" onclick="editExpense('${e.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+
+          <button class="expense-action delete" onclick="deleteExpense('${e.id}')"><i class="fa-solid fa-trash"></i> Delete</button>
+
+        </div>
+
+      </div>
+
+    `).join('');
+
+  }
+
+  function renderExpenses() {
+
+    const totalEl = document.getElementById('expenseTotalValue');
+
+    const total = EXPENSE_CATEGORIES.reduce(
+
+      (sum, category) => sum + expensesForCategory(category).reduce((s, e) => s + Number(e.amount || 0), 0),
+
+      0
+
+    );
+
+    if (totalEl) totalEl.textContent = money(total);
+
+    renderExpenseCategoryCards();
+
+    renderExpensesGlobalRecords();
+
+  }
+
+  function toggleExpenseCategory(category) {
+
+    if (editingExpenseId && activeExpenseCategory !== category) {
+
+      editingExpenseId = null;
+
+    }
+
+    activeExpenseCategory = activeExpenseCategory === category ? null : category;
+
+    renderExpenses();
+
+    if (activeExpenseCategory) focusExpenseEntry();
+
+  }
+
+  function focusExpenseEntry() {
+
+    const input = document.getElementById('expenseName');
+
+    if (input) {
+
+      setTimeout(() => {
+
+        input.focus();
+
+        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      }, 30);
+
+    }
+
+  }
+
+  function showExpenseFeedback(message) {
+
+    const el = document.getElementById('expenseFeedback');
+
+    if (el) el.textContent = message;
+
+  }
+
+  async function syncExpensesFromSupabase() {
+
+    if (!currentUser) return;
+
+    try {
+
+      const { data, error } = await supabaseClient
+
+        .from('expenses')
+
+        .select('*')
+
+        .eq('user_id', currentUser.id)
+
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+
+      expenses = (data || []).map(row => ({
+
+        id: row.id,
+
+        name: row.name,
+
+        date: row.date,
+
+        amount: Number(row.amount || 0),
+
+        category: row.category || 'Business Operations',
+
+        notes: row.notes || ''
+
+      }));
+
+    } catch(e) {
+
+      console.error('Expense sync error:', e);
+
+    }
+
+    renderExpenses();
+
+  }
+
+  async function saveExpense() {
+
+    const name = document.getElementById('expenseName')?.value.trim();
+
+    const date = document.getElementById('expenseDate')?.value;
+
+    const amount = Number(document.getElementById('expenseAmount')?.value || 0);
+
+    const notes = document.getElementById('expenseNotes')?.value.trim() || '';
+
+    if (!activeExpenseCategory) {
+
+      alert('Please open an expense category first.');
+
+      return;
+
+    }
+
+    if (!name || !date || amount <= 0) {
+
+      alert('Please enter a description, date and valid amount.');
+
+      return;
+
+    }
+
+    const payload = {
+
+      user_id: currentUser.id,
+
+      name,
+
+      date,
+
+      amount,
+
+      category: activeExpenseCategory,
+
+      notes
+
+    };
+
+    try {
+
+      const wasEditing = Boolean(editingExpenseId);
+
+      if (wasEditing) {
+
+        const { error } = await supabaseClient
+
+          .from('expenses')
+
+          .update(payload)
+
+          .eq('id', editingExpenseId)
+
+          .eq('user_id', currentUser.id);
+
+        if (error) throw error;
+
+        editingExpenseId = null;
+
+        await syncExpensesFromSupabase();
+
+      } else {
+
+        const { error } = await supabaseClient.from('expenses').insert([payload]);
+
+        if (error) throw error;
+
+        await syncExpensesFromSupabase();
+
+      }
+
+      resetExpenseEntryFields();
+
+      renderExpenses();
+
+      showExpenseFeedback(wasEditing ? '✓ Expense updated' : '✓ Expense added');
+
+      focusExpenseEntry();
+
+    } catch(e) {
+
+      alert('Error saving expense: ' + e.message);
+
+    }
+
+  }
+
+  function editExpense(id) {
+
+    const e = expenses.find(x => x.id === id);
+
+    if (!e) return;
+
+    editingExpenseId = id;
+
+    activeExpenseCategory = expenseCategoryForRecord(e);
+
+    renderExpenses();
+
+    focusExpenseEntry();
+
+  }
+
+  function resetExpenseForm() {
+
+    editingExpenseId = null;
+
+    resetExpenseEntryFields();
+
+    activeExpenseCategory = null;
+
+    renderExpenses();
+
+  }
+
+  function cancelExpenseEdit() {
+
+    resetExpenseForm();
+
+  }
+
+  async function deleteExpense(id) {
+
+    if (!confirm('Delete this expense?')) return;
+
+    try {
+
+      const { error } = await supabaseClient
+
+        .from('expenses')
+
+        .delete()
+
+        .eq('id', id)
+
+        .eq('user_id', currentUser.id);
+
+      if (error) throw error;
+
+      if (editingExpenseId === id) editingExpenseId = null;
+
+      await syncExpensesFromSupabase();
+
+      renderExpenses();
+
+    } catch(e) {
+
+      alert('Failed to delete expense: ' + e.message);
+
+    }
+
+  }
+
+  /* STOCKS MANAGEMENT */
+
+    async function syncAllStocksFromSupabase() {
+
+      if (!currentUser) return;
+
+      try {
+
+        const [oilRes, pBottleRes, specRes] = await Promise.all([
+
+          supabaseClient.from('oil_bottles').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}),
+
+          supabaseClient.from('perfume_bottles').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false}),
+
+          supabaseClient.from('specific_perfumes').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false})
+
+        ]);
+
+        if (oilRes.data) oilBottleStocks = oilRes.data;
+
+        if (pBottleRes.data) perfumeBottleStocks = pBottleRes.data;
+
+        if (specRes.data) specificPerfumeStocks = specRes.data;
+
+      } catch(e) {
+
+        console.error('Error fetching stock data:', e);
+
+      }
+
+      renderStocksArea();
+
+    }
+
+    function toggleAccordion(id) {
+
+      const content = document.getElementById(id);
+
+      if (content) content.classList.toggle('active');
+
+    }
+
+    function renderStocksArea() {
+
+      renderOilBottlesList();
+
+      renderPerfumeBottlesList();
+
+      renderSpecificPerfumesList();
+
+    }
+
+    /* A — Oil Bottles */
+
+    function calcOilRem() {
+
+      const cur = Number(document.getElementById('oilCurrent').value || 0);
+
+      const used = Number(document.getElementById('oilUsed').value || 0);
+
+      document.getElementById('oilRemaining').value = cur - used;
+
+    }
+
+    async function saveOilBottle() {
+
+      const name = document.getElementById('oilName').value.trim();
+
+      const current = Number(document.getElementById('oilCurrent').value || 0);
+
+      const used = Number(document.getElementById('oilUsed').value || 0);
+
+      const remaining = current - used;
+
+      if (!name) { alert('Please enter name / size.'); return; }
+
+      const payload = {
+
+        user_id: currentUser.id,
+
+        name,
+
+        current_stock: current,
+
+        used_stock: used,
+
+        remaining_stock: remaining,
+
+        date: todayISO()
+
+      };
+
+      try {
+
+        if (editingOilId) {
+
+          const { error } = await supabaseClient.from('oil_bottles').update(payload).eq('id', editingOilId).eq('user_id', currentUser.id);
+
+          if (error) throw error;
+
+        } else {
+
+          const { error } = await supabaseClient.from('oil_bottles').insert([payload]);
+
+          if (error) throw error;
+
+        }
+
+        resetOilForm();
+
+        await syncAllStocksFromSupabase();
+
+      } catch(e) { alert('Failed to save Oil Bottle: ' + e.message); }
+
+    }
+
+    function editOilBottle(id) {
+
+      const rec = oilBottleStocks.find(x => x.id === id); if (!rec) return;
+
+      editingOilId = id;
+
+      document.getElementById('oilName').value = rec.name;
+
+      document.getElementById('oilCurrent').value = rec.current_stock;
+
+      document.getElementById('oilUsed').value = rec.used_stock;
+
+      calcOilRem();
+
+      document.getElementById('oilFormTitle').textContent = 'Edit Oil Bottle';
+
+      document.getElementById('oilSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Update Record';
+
+      document.getElementById('oilCancelBtn').style.display = 'block';
+
+    }
+
+    function resetOilForm() {
+
+      editingOilId = null;
+
+      document.getElementById('oilName').value = '';
+
+      document.getElementById('oilCurrent').value = '';
+
+      document.getElementById('oilUsed').value = '';
+
+      document.getElementById('oilRemaining').value = '';
+
+      document.getElementById('oilFormTitle').textContent = 'Add Oil Bottle';
+
+      document.getElementById('oilSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Save Record';
+
+      document.getElementById('oilCancelBtn').style.display = 'none';
+
+    }
+
+    async function deleteOilBottle(id) {
+
+      if (!confirm('Delete this record?')) return;
+
+      const { error } = await supabaseClient.from('oil_bottles').delete().eq('id', id).eq('user_id', currentUser.id);
+
+      if (error) throw error;
+
+      await syncAllStocksFromSupabase();
+
+    }
+
+    function renderOilBottlesList() {
+
+      const el = document.getElementById('oilBottlesList');
+
+      if (!el) return;
+
+      if (!oilBottleStocks.length) { el.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub);">No Oil Bottles recorded.</div>'; return; }
+
+      el.innerHTML = oilBottleStocks.map(r => `
+
+        <div class="stock-rec-card">
+
+          <div class="stock-rec-head">
+
+            <span>${escapeHtml(r.name)}</span>
+
+            <div style="display:flex; gap:6px;">
+
+              <button class="small-action" onclick="editOilBottle('${r.id}')">Edit</button>
+
+              <button class="small-action delete" onclick="deleteOilBottle('${r.id}')">Delete</button>
+
+            </div>
+
+          </div>
+
+          <div class="stock-grid-3">
+
+            <div><div class="stock-stat-lbl">Current</div><div class="stock-stat-val">${r.current_stock}</div></div>
+
+            <div><div class="stock-stat-lbl">Used</div><div class="stock-stat-val">${r.used_stock}</div></div>
+
+            <div><div class="stock-stat-lbl">Remaining</div><div class="stock-stat-val">${r.remaining_stock}</div></div>
+
+          </div>
+
+        </div>`).join('');
+
+    }
+
+    /* B — Perfume Bottles */
+
+    function calcPBottlePCS() {
+
+      const size = document.getElementById('pBottleSize').value;
+
+      const bBrought = Number(document.getElementById('pBoxesBrought').value || 0);
+
+      const bUsed = Number(document.getElementById('pBoxesUsed').value || 0);
+
+      const mult = BOTTLE_FIXED_PCS[size] || 0;
+
+      
+
+      const totPcs = bBrought * mult;
+
+      const usedPcs = bUsed * mult;
+
+      const availPcs = totPcs - usedPcs;
+
+      
+
+      document.getElementById('pTotalPcsLbl').innerText = totPcs;
+
+      document.getElementById('pUsedPcsLbl').innerText = usedPcs;
+
+      document.getElementById('pAvailPcsLbl').innerText = availPcs;
+
+    }
+
+    async function savePerfumeBottleBox() {
+
+      const bottle_size = document.getElementById('pBottleSize').value;
+
+      const boxes_brought = Number(document.getElementById('pBoxesBrought').value || 0);
+
+      const boxes_used = Number(document.getElementById('pBoxesUsed').value || 0);
+
+      const pcs_per_box = BOTTLE_FIXED_PCS[bottle_size] || 0;
+
+      
+
+      const total_pcs = boxes_brought * pcs_per_box;
+
+      const used_pcs = boxes_used * pcs_per_box;
+
+      const available_pcs = total_pcs - used_pcs;
+
+      const payload = {
+
+        user_id: currentUser.id,
+
+        bottle_size,
+
+        boxes_brought,
+
+        boxes_used,
+
+        pcs_per_box,
+
+        total_pcs,
+
+        used_pcs,
+
+        available_pcs,
+
+        date: todayISO()
+
+      };
+
+      try {
+
+        if (editingPBottleId) {
+
+          const { error } = await supabaseClient.from('perfume_bottles').update(payload).eq('id', editingPBottleId).eq('user_id', currentUser.id);
+
+          if (error) throw error;
+
+        } else {
+
+          const { error } = await supabaseClient.from('perfume_bottles').insert([payload]);
+
+          if (error) throw error;
+
+        }
+
+        resetPBottleForm();
+
+        await syncAllStocksFromSupabase();
+
+      } catch(e) { alert('Failed to save Bottle Box record: ' + e.message); }
+
+    }
+
+    function editPerfumeBottleBox(id) {
+
+      const rec = perfumeBottleStocks.find(x => x.id === id); if (!rec) return;
+
+      editingPBottleId = id;
+
+      document.getElementById('pBottleSize').value = rec.bottle_size;
+
+      document.getElementById('pBoxesBrought').value = rec.boxes_brought;
+
+      document.getElementById('pBoxesUsed').value = rec.boxes_used;
+
+      calcPBottlePCS();
+
+      document.getElementById('pBottleFormTitle').textContent = 'Edit Perfume Bottle Box Record';
+
+      document.getElementById('pBottleSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Update Box Record';
+
+      document.getElementById('pBottleCancelBtn').style.display = 'block';
+
+    }
+
+    function resetPBottleForm() {
+
+      editingPBottleId = null;
+
+      document.getElementById('pBoxesBrought').value = '';
+
+      document.getElementById('pBoxesUsed').value = '';
+
+      calcPBottlePCS();
+
+      document.getElementById('pBottleFormTitle').textContent = 'Add Perfume Bottle Boxes';
+
+      document.getElementById('pBottleSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Save Box Record';
+
+      document.getElementById('pBottleCancelBtn').style.display = 'none';
+
+    }
+
+    async function deletePerfumeBottleBox(id) {
+
+      if (!confirm('Delete this box record?')) return;
+
+      const { error } = await supabaseClient.from('perfume_bottles').delete().eq('id', id).eq('user_id', currentUser.id);
+
+      if (error) throw error;
+
+      await syncAllStocksFromSupabase();
+
+    }
+
+    function renderPerfumeBottlesList() {
+
+      const el = document.getElementById('perfumeBottlesList');
+
+      if (!el) return;
+
+      if (!perfumeBottleStocks.length) { el.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub);">No Perfume Bottle Boxes recorded.</div>'; return; }
+
+      el.innerHTML = perfumeBottleStocks.map(r => `
+
+        <div class="stock-rec-card">
+
+          <div class="stock-rec-head">
+
+            <span>Size: ${escapeHtml(r.bottle_size)}</span>
+
+            <div style="display:flex; gap:6px;">
+
+              <button class="small-action" onclick="editPerfumeBottleBox('${r.id}')">Edit</button>
+
+              <button class="small-action delete" onclick="deletePerfumeBottleBox('${r.id}')">Delete</button>
+
+            </div>
+
+          </div>
+
+          <div style="font-size:0.75rem; color:var(--text-sub);">Boxes: ${r.boxes_brought} Brought / ${r.boxes_used} Used (${r.pcs_per_box} PCS/Box)</div>
+
+          <div class="stock-grid-3">
+
+            <div><div class="stock-stat-lbl">Total PCS</div><div class="stock-stat-val">${r.total_pcs}</div></div>
+
+            <div><div class="stock-stat-lbl">Used PCS</div><div class="stock-stat-val">${r.used_pcs}</div></div>
+
+            <div><div class="stock-stat-lbl">Available PCS</div><div class="stock-stat-val">${r.available_pcs}</div></div>
+
+          </div>
+
+        </div>`).join('');
+
+    }
+
+    /* C — Specific Perfume Items */
+
+    function calcSpecRem() {
+
+      const cur = Number(document.getElementById('specCurrent').value || 0);
+
+      const used = Number(document.getElementById('specUsed').value || 0);
+
+      document.getElementById('specRemaining').value = cur - used;
+
+    }
+
+    async function saveSpecificPerfume() {
+
+      const name = document.getElementById('specName').value.trim();
+
+      const current = Number(document.getElementById('specCurrent').value || 0);
+
+      const used = Number(document.getElementById('specUsed').value || 0);
+
+      const remaining = current - used;
+
+      if (!name) { alert('Please enter Perfume Name.'); return; }
+
+      const payload = {
+
+        user_id: currentUser.id,
+
+        perfume_name: name,
+
+        current_stock: current,
+
+        used_stock: used,
+
+        remaining_stock: remaining,
+
+        date: todayISO()
+
+      };
+
+      try {
+
+        if (editingSpecId) {
+
+          const { error } = await supabaseClient.from('specific_perfumes').update(payload).eq('id', editingSpecId).eq('user_id', currentUser.id);
+
+          if (error) throw error;
+
+        } else {
+
+          const { error } = await supabaseClient.from('specific_perfumes').insert([payload]);
+
+          if (error) throw error;
+
+        }
+
+        resetSpecForm();
+
+        await syncAllStocksFromSupabase();
+
+      } catch(e) { alert('Failed to save Specific Perfume Item: ' + e.message); }
+
+    }
+
+    function editSpecificPerfume(id) {
+
+      const rec = specificPerfumeStocks.find(x => x.id === id); if (!rec) return;
+
+      editingSpecId = id;
+
+      document.getElementById('specName').value = rec.perfume_name;
+
+      document.getElementById('specCurrent').value = rec.current_stock;
+
+      document.getElementById('specUsed').value = rec.used_stock;
+
+      calcSpecRem();
+
+      document.getElementById('specFormTitle').textContent = 'Edit Perfume Item';
+
+      document.getElementById('specSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Update Perfume';
+
+      document.getElementById('specCancelBtn').style.display = 'block';
+
+    }
+
+    function resetSpecForm() {
+
+      editingSpecId = null;
+
+      document.getElementById('specName').value = '';
+
+      document.getElementById('specCurrent').value = '';
+
+      document.getElementById('specUsed').value = '';
+
+      document.getElementById('specRemaining').value = '';
+
+      document.getElementById('specFormTitle').textContent = 'Add Perfume Item';
+
+      document.getElementById('specSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Add Perfume';
+
+      document.getElementById('specCancelBtn').style.display = 'none';
+
+    }
+
+    async function deleteSpecificPerfume(id) {
+
+      if (!confirm('Delete this perfume item?')) return;
+
+      const { error } = await supabaseClient.from('specific_perfumes').delete().eq('id', id).eq('user_id', currentUser.id);
+
+      if (error) throw error;
+
+      await syncAllStocksFromSupabase();
+
+    }
+
+    function renderSpecificPerfumesList() {
+
+      const el = document.getElementById('specificPerfumesList');
+
+      if (!el) return;
+
+      if (!specificPerfumeStocks.length) { el.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub);">No Specific Perfumes recorded.</div>'; return; }
+
+      el.innerHTML = specificPerfumeStocks.map(r => `
+
+        <div class="stock-rec-card">
+
+          <div class="stock-rec-head">
+
+            <span>${escapeHtml(r.perfume_name)}</span>
+
+            <div style="display:flex; gap:6px;">
+
+              <button class="small-action" onclick="editSpecificPerfume('${r.id}')">Edit</button>
+
+              <button class="small-action delete" onclick="deleteSpecificPerfume('${r.id}')">Delete</button>
+
+            </div>
+
+          </div>
+
+          <div class="stock-grid-3">
+
+            <div><div class="stock-stat-lbl">Current</div><div class="stock-stat-val">${r.current_stock}</div></div>
+
+            <div><div class="stock-stat-lbl">Used</div><div class="stock-stat-val">${r.used_stock}</div></div>
+
+            <div><div class="stock-stat-lbl">Remaining</div><div class="stock-stat-val">${r.remaining_stock}</div></div>
+
+          </div>
+
+        </div>`).join('');
+
+    }
+
+    /* STOCKS HISTORY LOGIC */
+
+    function openStockHistoryModal() {
+
+      document.getElementById('stockHistoryModal').classList.add('active');
+
+      const container = document.getElementById('stockHistoryContent');
+
+      
+
+      const allActivities = [
+
+        ...oilBottleStocks.map(item => ({
+
+          type: 'Oil Bottle',
+
+          title: item.name,
+
+          current: item.current_stock,
+
+          used: item.used_stock,
+
+          remaining: item.remaining_stock,
+
+          date: item.date || item.created_at?.slice(0, 10) || 'N/A',
+
+          timestamp: new Date(item.created_at || Date.now()).getTime()
+
+        })),
+
+        ...perfumeBottleStocks.map(item => ({
+
+          type: 'Perfume Box',
+
+          title: `${item.bottle_size} Box`,
+
+          current: `${item.boxes_brought} Boxes (${item.total_pcs} PCS)`,
+
+          used: `${item.boxes_used} Boxes (${item.used_pcs} PCS)`,
+
+          remaining: `${item.available_pcs} PCS`,
+
+          date: item.date || item.created_at?.slice(0, 10) || 'N/A',
+
+          timestamp: new Date(item.created_at || Date.now()).getTime()
+
+        })),
+
+        ...specificPerfumeStocks.map(item => ({
+
+          type: 'Perfume Item',
+
+          title: item.perfume_name,
+
+          current: item.current_stock,
+
+          used: item.used_stock,
+
+          remaining: item.remaining_stock,
+
+          date: item.date || item.created_at?.slice(0, 10) || 'N/A',
+
+          timestamp: new Date(item.created_at || Date.now()).getTime()
+
+        }))
+
+      ];
+
+      
+
+      allActivities.sort((a, b) => b.timestamp - a.timestamp);
+
+      
+
+      if (!allActivities.length) {
+
+        container.innerHTML = '<div style="text-align:center; font-size:0.85rem; color:var(--text-sub); padding:30px 10px;">No stock activities recorded yet.</div>';
+
+        return;
+
+      }
+
+      
+
+      container.innerHTML = allActivities.map(act => `
+
+        <div class="activity-log-item">
+
+          <span class="activity-log-type">${escapeHtml(act.type)}</span>
+
+          <div class="activity-log-title">${escapeHtml(act.title)}</div>
+
+          <div class="activity-log-meta">Date Recorded: <strong>${escapeHtml(act.date)}</strong></div>
+
+          <div class="stock-grid-3" style="margin-top:10px;">
+
+            <div><div class="stock-stat-lbl">Total / Brought</div><div class="stock-stat-val">${act.current}</div></div>
+
+            <div><div class="stock-stat-lbl">Used</div><div class="stock-stat-val">${act.used}</div></div>
+
+            <div><div class="stock-stat-lbl">Available / Remaining</div><div class="stock-stat-val" style="color:var(--accent-gold);">${act.remaining}</div></div>
+
+          </div>
+
+        </div>
+
+      `).join('');
+
+    }
+
+    function igniteTeaserToast() {
+
+      const toast = document.getElementById('soonToast');
+
+      if (toast) {
+
+        toast.classList.add('trigger-fly');
+
+        setTimeout(() => toast.classList.remove('trigger-fly'), 3000);
+
+      }
+
+    }
+
+    function setReviewMode(m) {
+
+      reviewMode = m;
+
+      document.getElementById('tabDaily').classList.toggle('active', m==='daily');
+
+      document.getElementById('tabWeekly').classList.toggle('active', m==='weekly');
+
+      document.getElementById('tabMonthly').classList.toggle('active', m==='monthly');
+
+      document.getElementById('dailyFilters').style.display = m==='daily' ? 'block' : 'none';
+
+      document.getElementById('monthlyFilters').style.display = m==='monthly' ? 'block' : 'none';
+
+      document.getElementById('customFilters').style.display = 'none';
+
+      renderSalesProgress();
+
+    }
+
+    function showCustomRange() {
+
+      document.getElementById('dailyFilters').style.display = 'none';
+
+      document.getElementById('monthlyFilters').style.display = 'none';
+
+      document.getElementById('customFilters').style.display = 'block';
+
+    }
+
+    function openMonthlyReview() {
+
+      document.getElementById('monthlyReviewModal').classList.add('active');
+
+      const content = document.getElementById('monthlyReviewContent');
+
+      const month = document.getElementById('reviewMonth').value || monthISO();
+
+      
+
+      const monthSales = activeOrders.filter(s => (s.date || '').startsWith(month));
+
+      const totalRev = monthSales.reduce((sum, s) => sum + s.total, 0);
+
+      const totalQty = monthSales.reduce((sum, s) => sum + s.quantity, 0);
+
+      content.innerHTML = `
+
+        <div class="sales-entry-card">
+
+          <h3>Summary for ${month}</h3>
+
+          <div style="font-size:0.9rem; margin-bottom:8px;">Total Revenue: <strong>${money(totalRev)}</strong></div>
+
+          <div style="font-size:0.9rem; margin-bottom:8px;">Total Quantity Sold: <strong>${totalQty} PCS</strong></div>
+
+          <div style="font-size:0.9rem;">Total Sales Transactions: <strong>${monthSales.length}</strong></div>
+
+        </div>
+
+      `;
+
+    }
+
+    function closeSheet(id) {
+
+      document.getElementById(id).classList.remove('active');
+
+    }
+
+  </script>
+
+</body>
+
+</html>
